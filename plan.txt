@@ -1,0 +1,304 @@
+1. Project Overview
+--------------------------------------------------
+Project Name
+- TULAW ONE PLATFORM
+
+Description
+- ระบบศูนย์กลางดิจิทัลสำหรับคณะนิติศาสตร์ มหาวิทยาลัยธรรมศาสตร์
+- รวมระบบทั้งหมดไว้ในแพลตฟอร์มเดียว
+- รองรับ Microsoft Single Sign-On
+- รองรับการบริหารข้อมูล บุคลากร เอกสาร โครงการ การสื่อสาร และการจองทรัพยากร
+
+Objectives
+- รวมระบบงานไว้ในระบบเดียว
+- ลดการ Login หลายระบบ
+- เพิ่มประสิทธิภาพการทำงาน
+- รองรับการบริหารข้อมูลแบบ Real-time
+- เพิ่มความปลอดภัยของข้อมูล
+
+--------------------------------------------------
+2. System Scope
+--------------------------------------------------
+
+Modules
+
+1. Dashboard
+2. Application Hub
+3. Intranet
+4. Chat
+5. Book Meeting
+6. Documents
+7. Projects
+8. Users & Roles
+9. Audit Log
+10. System Configuration
+
+--------------------------------------------------
+3. User Roles
+--------------------------------------------------
+
+1. Super Admin
+- จัดการทุกระบบ
+- จัดการผู้ใช้งาน
+- จัดการสิทธิ์
+- ตั้งค่าระบบ
+- ดู Audit Log
+- จัดการ API
+- จัดการทุก Module
+
+2. System Admin
+- ดูแลระบบ
+- จัดการผู้ใช้งาน
+- AD Sync
+- ดู Audit
+- ตั้งค่าระบบ
+- จัดการ Documents
+
+3. Dean
+- ดู Dashboard
+- ดูรายงาน
+- อนุมัติโครงการ
+- ดูเอกสาร
+- ใช้งาน Chat
+- จองห้องประชุม
+
+4. Dept Admin
+- ดู Dashboard ของฝ่าย
+- จัดการประกาศฝ่าย
+- จัดการ Chat Room
+- อนุมัติโครงการฝ่าย
+- จัดการ Department Documents
+
+5. User
+- ใช้งาน Dashboard
+- Chat
+- Book Meeting
+- Upload Documents
+- สร้าง Project
+- ใช้งาน Application Hub
+
+6. Viewer
+- ดูข้อมูล
+- อ่านประกาศ
+- ดู Dashboard
+- ดู Project
+- ดู Documents (Read Only)
+
+--------------------------------------------------
+4. Functional Specification
+--------------------------------------------------
+
+Dashboard
+- Real-time Dashboard
+- Statistics
+- Advanced Search
+
+Application Hub
+- รวม Application
+- Instant Search
+- Pin Favorite
+
+Intranet
+- ข่าวสาร
+- ประกาศ
+- Calendar
+- Subscribe
+
+Chat
+- Real-time Chat
+- Emoji
+- File Upload
+- Search
+
+Book Meeting
+- จองห้อง
+- Teams Integration
+- Double Booking Protection
+
+Documents
+- Central Pool
+- Department Pool
+- Personal Pool
+- Upload
+- Download
+- Permission
+- Audit Trail
+
+Projects
+- Kanban Board
+- Progress Tracking
+- Approval Workflow
+
+Users & Roles
+- Role Management
+- AD Sync
+- CSV Import
+- User Management
+
+Audit Log
+- Immutable Log
+- Export CSV
+- Activity Tracking
+
+System Configuration
+- Authentication
+- Branding
+- Storage
+- API Key
+- Project Settings
+
+--------------------------------------------------
+5. Technology Stack
+--------------------------------------------------
+
+Frontend
+- Next.js 16+ (App Router, Turbopack)
+
+Language
+- TypeScript 5
+
+UI
+- shadcn/ui
+- Tailwind CSS 3
+
+Backend
+- Next.js Route Handler
+
+Authentication
+- NextAuth.js 4
+- Credentials Provider
+- JWT
+
+ORM
+- Prisma ORM 7
+
+Database
+- PostgreSQL
+
+API
+- REST API
+
+Version Control
+- Git + GitHub
+
+Package Manager
+- npm
+
+Deployment
+- Cloud Server
+
+--------------------------------------------------
+6. Security Specification
+--------------------------------------------------
+
+Authentication
+- Microsoft Single Sign-On
+
+Directory Service
+- LDAP
+- Active Directory Sync (≤15 นาที)
+
+Authorization
+- Role-Based Access Control (RBAC)
+
+MFA
+- บังคับใช้สำหรับ System Admin ขึ้นไป
+
+Encryption
+- TLS / HTTPS
+
+Session
+- JWT
+- Session Timeout
+
+Audit
+- Immutable Audit Log
+
+API Security
+- JWT Validation
+- Permission Checking
+
+Password
+- Hash Password (Argon2/Bcrypt)
+
+Performance
+- รองรับผู้ใช้งานพร้อมกัน ≥300 คน
+
+Availability
+- SLA ≥99.5%
+
+--------------------------------------------------
+7. Deployment Environment
+--------------------------------------------------
+
+Hosting
+- Cloud Infrastructure
+
+Application Server
+- Next.js Production Server
+
+Database
+- PostgreSQL
+
+Storage
+- Cloud Storage / Local Storage
+
+SSL
+- HTTPS Only
+
+Location
+- Server หรือ Data Center อยู่ในประเทศไทย
+  หรือจัดเก็บข้อมูลภายในประเทศไทย
+
+Backup
+- Database Backup
+- File Backup
+
+Monitoring
+- System Monitoring
+- Application Monitoring
+
+Warranty
+- รับประกันระบบ 1 ปี
+- Critical Bug ≤3 วันทำการ
+- Other Bug ≤7 วันทำการ
+
+--------------------------------------------------
+8. Non-functional Requirements
+--------------------------------------------------
+
+Performance
+- Response Time < 3 วินาที
+- รองรับ 300 Concurrent Users
+
+Reliability
+- Backup
+- Recovery
+
+Availability
+- SLA 99.5%
+
+Scalability
+- รองรับการเพิ่ม Module
+- รองรับการเพิ่ม Storage
+
+Maintainability
+- Logging
+- Monitoring
+- Documentation
+
+--------------------------------------------------
+9. Deliverables
+--------------------------------------------------
+
+- Software Requirement Specification (SRS)
+- Software Design Specification (SDD)
+- Database Design (ERD)
+- API Specification
+- UI Specification
+- User Manual
+- Admin Manual
+- Test Report
+- Deployment Guide
+- Source Code
+- Production Deployment
