@@ -1,0 +1,1650 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==============================================================================
+// 1. ภูมิศาสตร์ (Geography)
+// ==============================================================================
+
+model Region {
+  id        Int        @id @default(autoincrement())
+  nameTh    String     @map("name_th") @db.VarChar(150)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  provinces Province[]
+
+  @@map("regions")
+}
+
+model Province {
+  id          Int          @id @default(autoincrement())
+  regionId    Int          @map("region_id")
+  nameTh      String       @map("name_th") @db.VarChar(150)
+  nameEn      String?      @map("name_en") @db.VarChar(150)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  region      Region       @relation(fields: [regionId], references: [id])
+  districts   District[]
+
+  @@map("provinces")
+}
+
+model District {
+  id           Int           @id @default(autoincrement())
+  provinceId   Int           @map("province_id")
+  nameTh       String        @map("name_th") @db.VarChar(150)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  province     Province      @relation(fields: [provinceId], references: [id])
+  subdistricts Subdistrict[]
+
+  @@map("districts")
+}
+
+model Subdistrict {
+  id            Int            @id @default(autoincrement())
+  districtId    Int            @map("district_id")
+  nameTh        String         @map("name_th") @db.VarChar(150)
+  zipCode       String?        @map("zip_code") @db.VarChar(10)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  district      District       @relation(fields: [districtId], references: [id])
+  userAddresses UserAddress[]
+
+  @@map("subdistricts")
+}
+
+// ==============================================================================
+// 2. หน่วยงาน (Departments)
+// ==============================================================================
+
+model Department {
+  id            Int            @id @default(autoincrement())
+  name          String         @db.VarChar(150)
+  contactEmail  String?        @map("contact_email") @db.VarChar(255)
+  telephone     String?        @db.VarChar(50)
+  location      String?        @db.VarChar(255)
+  status        String         @default("active") @db.VarChar(50)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  users         User[]
+  documents     Document[]
+  chatRooms     ChatRoom[]
+  eofficeDocuments EofficeDocument[]
+
+  @@map("departments")
+}
+
+// ==============================================================================
+// 3. คำนำหน้า (Prefixes)
+// ==============================================================================
+
+model Prefix {
+  id        Int      @id @default(autoincrement())
+  nameTh    String   @map("name_th") @db.VarChar(50)
+  nameEn    String?  @map("name_en") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("prefixes")
+}
+
+// ==============================================================================
+// 4. บทบาท (Roles) & สิทธิ์ (Permissions)
+// ==============================================================================
+
+model Role {
+  id              Int              @id @default(autoincrement())
+  roleCode        String           @unique @map("role_code") @db.VarChar(50)
+  nameTh          String           @map("name_th") @db.VarChar(100)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+  appPermissions  AppPermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id              Int              @id @default(autoincrement())
+  code            String           @unique @db.VarChar(100)
+  module          String           @db.VarChar(100)
+  action          String           @db.VarChar(100)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid()) @db.Uuid
+  roleId       Int        @map("role_id")
+  permissionId Int        @map("permission_id")
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@map("role_permissions")
+}
+
+model AppPermission {
+  id        String    @id @default(uuid()) @db.Uuid
+  appId     String    @map("app_id") @db.Uuid
+  roleId    Int       @map("role_id") @db.SmallInt
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedBy String?   @map("deleted_by") @db.Uuid
+  role      Role      @relation(fields: [roleId], references: [id])
+
+  @@map("app_permissions")
+}
+
+// ==============================================================================
+// 5. ผู้ใช้ (Users)
+// ==============================================================================
+
+model User {
+  id            String            @id @default(uuid()) @db.Uuid
+  email         String            @unique @db.VarChar(255)
+  firstNameTh   String            @map("first_name_th") @db.VarChar(100)
+  lastNameTh    String            @map("last_name_th") @db.VarChar(100)
+  departmentId  Int               @map("department_id")
+  status        String            @default("active") @db.VarChar(50)
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?           @map("created_by") @db.Uuid
+  updatedBy     String?           @map("updated_by") @db.Uuid
+  deletedBy     String?           @map("deleted_by") @db.Uuid
+  department    Department        @relation(fields: [departmentId], references: [id])
+  userRoles     UserRole[]
+  userMfa       UserMfa[]
+  userSessions  UserSession[]
+  loginHistories LoginHistory[]
+  userAddresses UserAddress[]
+  auditLogs     AuditLog[]
+  documents     Document[]        @relation("OwnerDocuments")
+  favorites     Favorite[]
+  chatMessages  ChatMessage[]
+  chatReads     ChatRead[]
+  chatMembers   ChatMember[]
+  calendarAttendees CalendarAttendee[]
+  announcementSubscriptions AnnouncementSubscription[]
+  dashboardUserSettings DashboardUserSetting[]
+  pushNotifications PushNotification[]
+  notificationReads NotificationRead[]
+  adProfile     UserAdProfile?
+  hrProfile     HrEmployeeProfile?          @relation("HrProfile")
+  ownedProjects Project[]                   @relation("ProjectOwner")
+  assignedTasks ProjectTask[]               @relation("TaskAssignee")
+  projectMemberships ProjectMember[]        @relation("ProjectMemberUser")
+  timesheetEntries ProjectTimesheet[]       @relation("TimesheetUser")
+  sentRoutings   EofficeRouting[]           @relation("RoutingSender")
+  receivedRoutings EofficeRouting[]         @relation("RoutingReceiver")
+  eofficeSignatures EofficeSignature[]      @relation("SignatureUser")
+  leaveRequests  HrLeaveRequest[]           @relation("LeaveRequester")
+  overtimeRequests HrOvertimeRequest[]      @relation("OvertimeRequester")
+  expenseClaims  HrExpenseClaim[]           @relation("ExpenseClaimer")
+  attendances    HrAttendance[]             @relation("AttendanceUser")
+  payslips       HrPayslip[]                @relation("PayslipUser")
+  purchaseRequests ErpPurchaseRequest[]     @relation("PRRequester")
+  goodsReceipts  ErpGoodsReceipt[]          @relation("GoodsReceiver")
+  roomBookings   RoomBooking[]              @relation("RoomBookingUser")
+  teachingLoads  AcademicTeachingLoad[]     @relation("TeachingLoadUser")
+  helpdeskTickets HelpdeskTicket[]          @relation("TicketRequester")
+
+  @@map("users")
+}
+
+model UserAdProfile {
+  id                String    @id @default(uuid()) @db.Uuid
+  adObjectGuid      String    @unique @map("ad_object_guid") @db.Uuid
+  adUpn             String    @unique @map("ad_upn") @db.VarChar(255)
+  adSamAccountName  String?   @map("ad_sam_account_name") @db.VarChar(150)
+  adDn              String?   @map("ad_dn") @db.VarChar(255)
+  positionTitle     String?   @map("position_title") @db.VarChar(255)
+  telephone         String?   @db.VarChar(20)
+  mobilePhone       String?   @map("mobile_phone") @db.VarChar(20)
+  adAccountControl  Int?      @map("ad_account_control")
+  status            String    @default("active") @db.VarChar(50)
+  lastSyncAt        DateTime? @map("last_sync_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user              User      @relation(fields: [id], references: [id])
+
+  @@map("user_ad_profiles")
+}
+
+model UserRole {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  roleId    Int       @map("role_id")
+  startDate DateTime? @map("start_date") @db.Date
+  endDate   DateTime? @map("end_date") @db.Date
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedBy String?   @map("deleted_by") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id])
+  role      Role      @relation(fields: [roleId], references: [id])
+
+  @@map("user_roles")
+}
+
+model UserMfa {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  secret     String    @db.VarChar(255)
+  backupCode String?   @map("backup_code") @db.VarChar(255)
+  isEnabled  Boolean   @default(false) @map("is_enabled")
+  verifiedAt DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy  String?   @map("created_by") @db.Uuid
+  updatedBy  String?   @map("updated_by") @db.Uuid
+  deletedBy  String?   @map("deleted_by") @db.Uuid
+  user       User      @relation(fields: [userId], references: [id])
+
+  @@map("user_mfa")
+}
+
+model UserSession {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  jwtId        String    @map("jwt_id") @db.VarChar(255)
+  refreshToken String?   @map("refresh_token") @db.VarChar(255)
+  device       String?   @db.VarChar(255)
+  browser      String?   @db.VarChar(255)
+  ipAddress    String?   @map("ip_address") @db.VarChar(50)
+  loginTime    DateTime? @map("login_time") @db.Timestamptz(6)
+  logoutTime   DateTime? @map("logout_time") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy    String?   @map("created_by") @db.Uuid
+  updatedBy    String?   @map("updated_by") @db.Uuid
+  deletedBy    String?   @map("deleted_by") @db.Uuid
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@map("user_sessions")
+}
+
+model LoginHistory {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  status    String    @default("success") @db.VarChar(50)
+  ipAddress String?   @map("ip_address") @db.VarChar(50)
+  userAgent String?   @map("user_agent") @db.Text
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedBy String?   @map("deleted_by") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("login_histories")
+}
+
+model UserAddress {
+  id            String      @id @default(uuid()) @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  addressType   String      @default("home") @map("address_type") @db.VarChar(50)
+  addressDetail String?     @map("address_detail") @db.Text
+  subdistrictId Int         @map("subdistrict_id")
+  isPrimary     Boolean     @default(false) @map("is_primary")
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?     @map("created_by") @db.Uuid
+  updatedBy     String?     @map("updated_by") @db.Uuid
+  deletedBy     String?     @map("deleted_by") @db.Uuid
+  user          User        @relation(fields: [userId], references: [id])
+  subdistrict   Subdistrict @relation(fields: [subdistrictId], references: [id])
+
+  @@map("user_addresses")
+}
+
+// ==============================================================================
+// 6. Audit Log (ตรวจสอบ)
+// ==============================================================================
+
+model AuditLog {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String?   @map("user_id") @db.Uuid
+  module        String    @db.VarChar(100)
+  action        String    @db.VarChar(100)
+  entityType    String?   @map("entity_type") @db.VarChar(100)
+  entityId      String?   @map("entity_id") @db.VarChar(50)
+  oldValue      String?   @map("old_value") @db.Text
+  newValue      String?   @map("new_value") @db.Text
+  ipAddress     String?   @map("ip_address") @db.VarChar(50)
+  browser       String?   @db.VarChar(100)
+  device        String?   @db.VarChar(100)
+  userAgent     String?   @map("user_agent") @db.Text
+  requestId     String?   @map("request_id") @db.VarChar(100)
+  traceId       String?   @map("trace_id") @db.VarChar(100)
+  correlationId String?   @map("correlation_id") @db.VarChar(100)
+  isSuccess     Boolean   @default(true) @map("is_success")
+  statusCode    Int?      @map("status_code")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?   @map("created_by") @db.Uuid
+  updatedBy     String?   @map("updated_by") @db.Uuid
+  deletedBy     String?   @map("deleted_by") @db.Uuid
+  user          User?     @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// ==============================================================================
+// 7. ระบบไฟล์ & เอกสาร (Storage & Documents)
+// ==============================================================================
+
+model StorageFile {
+  id              String    @id @default(uuid()) @db.Uuid
+  fileName        String    @map("file_name") @db.VarChar(150)
+  fileSize        BigInt    @map("file_size")
+  mimeType        String    @map("mime_type") @db.VarChar(100)
+  storageProvider String    @map("storage_provider") @db.VarChar(100)
+  bucket          String?   @db.VarChar(100)
+  path            String    @db.VarChar(1024)
+  checksum        String?   @db.VarChar(255)
+  sha256          String?   @db.VarChar(255)
+  etag            String?   @db.VarChar(255)
+  isVirusScan     Boolean   @default(false) @map("is_virus_scan")
+  scanResult      String?   @map("scan_result") @db.VarChar(100)
+  thumbnailPath   String?   @map("thumbnail_path") @db.VarChar(1024)
+  width           Int?
+  height          Int?
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy       String?   @map("created_by") @db.Uuid
+  updatedBy       String?   @map("updated_by") @db.Uuid
+  deletedBy       String?   @map("deleted_by") @db.Uuid
+  documents       Document[]
+  documentVersions DocumentVersion[]
+  chatFiles       ChatFile[]
+  entityAttachments EntityAttachment[]
+
+  @@map("storage_files")
+}
+
+model Document {
+  id            String            @id @default(uuid()) @db.Uuid
+  title         String            @db.VarChar(255)
+  poolType      String            @default("personal") @map("pool_type") @db.VarChar(50)
+  storageFileId String            @map("storage_file_id") @db.Uuid
+  departmentId  Int?              @map("department_id")
+  ownerUserId   String            @map("owner_user_id") @db.Uuid
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?           @map("created_by") @db.Uuid
+  updatedBy     String?           @map("updated_by") @db.Uuid
+  deletedBy     String?           @map("deleted_by") @db.Uuid
+  storageFile   StorageFile       @relation(fields: [storageFileId], references: [id])
+  department    Department?       @relation(fields: [departmentId], references: [id])
+  owner         User              @relation("OwnerDocuments", fields: [ownerUserId], references: [id])
+  tags          DocumentTag[]
+  shares        DocumentShare[]
+  versions      DocumentVersion[]
+
+  @@map("documents")
+}
+
+model DocumentTag {
+  id         String    @id @default(uuid()) @db.Uuid
+  documentId String    @map("document_id") @db.Uuid
+  tagName    String    @map("tag_name") @db.VarChar(100)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy  String?   @map("created_by") @db.Uuid
+  updatedBy  String?   @map("updated_by") @db.Uuid
+  deletedBy  String?   @map("deleted_by") @db.Uuid
+  document   Document  @relation(fields: [documentId], references: [id])
+
+  @@map("document_tags")
+}
+
+model DocumentShare {
+  id               String    @id @default(uuid()) @db.Uuid
+  documentId       String    @map("document_id") @db.Uuid
+  sharedWithUserId String    @map("shared_with_user_id") @db.Uuid
+  permission       String    @default("view") @db.VarChar(50)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy        String?   @map("created_by") @db.Uuid
+  updatedBy        String?   @map("updated_by") @db.Uuid
+  deletedBy        String?   @map("deleted_by") @db.Uuid
+  document         Document  @relation(fields: [documentId], references: [id])
+
+  @@map("document_shares")
+}
+
+model DocumentVersion {
+  id            String      @id @default(uuid()) @db.Uuid
+  documentId    String      @map("document_id") @db.Uuid
+  storageFileId String      @map("storage_file_id") @db.Uuid
+  versionNumber String      @map("version_number") @db.VarChar(255)
+  changeLog     String?     @map("change_log") @db.Text
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?     @map("created_by") @db.Uuid
+  updatedBy     String?     @map("updated_by") @db.Uuid
+  deletedBy     String?     @map("deleted_by") @db.Uuid
+  document      Document    @relation(fields: [documentId], references: [id])
+  storageFile   StorageFile @relation(fields: [storageFileId], references: [id])
+
+  @@map("document_versions")
+}
+
+model EntityAttachment {
+  id            String      @id @default(uuid()) @db.Uuid
+  entityType    String      @map("entity_type") @db.VarChar(100)
+  entityId      String      @map("entity_id") @db.VarChar(50)
+  storageFileId String      @map("storage_file_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?     @map("created_by") @db.Uuid
+  updatedBy     String?     @map("updated_by") @db.Uuid
+  deletedBy     String?     @map("deleted_by") @db.Uuid
+  storageFile   StorageFile @relation(fields: [storageFileId], references: [id])
+
+  @@map("entity_attachments")
+}
+
+// ==============================================================================
+// 8. Application Hub
+// ==============================================================================
+
+model ApplicationCategory {
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(150)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  applications Application[]
+
+  @@map("application_categories")
+}
+
+model Application {
+  id         String             @id @default(uuid()) @db.Uuid
+  name       String             @db.VarChar(150)
+  categoryId Int                @map("category_id")
+  url        String?            @db.VarChar(2048)
+  icon       String?            @db.VarChar(255)
+  status     String             @default("active") @db.VarChar(50)
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  createdBy  String?            @map("created_by") @db.Uuid
+  updatedBy  String?            @map("updated_by") @db.Uuid
+  deletedBy  String?            @map("deleted_by") @db.Uuid
+  category   ApplicationCategory @relation(fields: [categoryId], references: [id])
+  groupMembers ApplicationGroupMember[]
+
+  @@map("applications")
+}
+
+model ApplicationGroup {
+  id         String                   @id @default(uuid()) @db.Uuid
+  name       String                   @db.VarChar(150)
+  createdAt  DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime?                @map("deleted_at") @db.Timestamptz(6)
+  createdBy  String?                  @map("created_by") @db.Uuid
+  updatedBy  String?                  @map("updated_by") @db.Uuid
+  deletedBy  String?                  @map("deleted_by") @db.Uuid
+  members    ApplicationGroupMember[]
+
+  @@map("application_groups")
+}
+
+model ApplicationGroupMember {
+  id        String           @id @default(uuid()) @db.Uuid
+  groupId   String           @map("group_id") @db.Uuid
+  appId     String           @map("app_id") @db.Uuid
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?          @map("created_by") @db.Uuid
+  updatedBy String?          @map("updated_by") @db.Uuid
+  deletedBy String?          @map("deleted_by") @db.Uuid
+  group     ApplicationGroup @relation(fields: [groupId], references: [id])
+  app       Application      @relation(fields: [appId], references: [id])
+
+  @@map("application_group_members")
+}
+
+model ApplicationGroupApp {
+  id        String    @id @default(uuid()) @db.Uuid
+  groupId   String    @map("group_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@map("application_group_apps")
+}
+
+// ==============================================================================
+// 9. Chat
+// ==============================================================================
+
+model ChatRoom {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String        @db.VarChar(150)
+  roomType     String        @default("group") @map("room_type") @db.VarChar(50)
+  departmentId Int?          @map("department_id")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdBy    String?       @map("created_by") @db.Uuid
+  updatedBy    String?       @map("updated_by") @db.Uuid
+  deletedBy    String?       @map("deleted_by") @db.Uuid
+  department   Department?   @relation(fields: [departmentId], references: [id])
+  messages     ChatMessage[]
+  members      ChatMember[]
+
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id        String     @id @default(uuid()) @db.Uuid
+  roomId    String     @map("room_id") @db.Uuid
+  userId    String     @map("user_id") @db.Uuid
+  message   String?    @db.Text
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?    @map("created_by") @db.Uuid
+  updatedBy String?    @map("updated_by") @db.Uuid
+  deletedBy String?    @map("deleted_by") @db.Uuid
+  room      ChatRoom   @relation(fields: [roomId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
+  reads     ChatRead[]
+  files     ChatFile[]
+
+  @@map("chat_messages")
+}
+
+model ChatMember {
+  id        String    @id @default(uuid()) @db.Uuid
+  roomId    String    @map("room_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  role      String    @default("member") @db.VarChar(50)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedBy String?   @map("deleted_by") @db.Uuid
+  room      ChatRoom  @relation(fields: [roomId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("chat_members")
+}
+
+model ChatRead {
+  id        String      @id @default(uuid()) @db.Uuid
+  messageId String      @map("message_id") @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  readAt    DateTime?   @map("read_at") @db.Timestamptz(6)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?     @map("created_by") @db.Uuid
+  updatedBy String?     @map("updated_by") @db.Uuid
+  deletedBy String?     @map("deleted_by") @db.Uuid
+  message   ChatMessage @relation(fields: [messageId], references: [id])
+  user      User        @relation(fields: [userId], references: [id])
+
+  @@map("chat_reads")
+}
+
+model ChatFile {
+  id            String      @id @default(uuid()) @db.Uuid
+  messageId     String      @map("message_id") @db.Uuid
+  storageFileId String      @map("storage_file_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?     @map("created_by") @db.Uuid
+  updatedBy     String?     @map("updated_by") @db.Uuid
+  deletedBy     String?     @map("deleted_by") @db.Uuid
+  message       ChatMessage @relation(fields: [messageId], references: [id])
+  storageFile   StorageFile @relation(fields: [storageFileId], references: [id])
+
+  @@map("chat_files")
+}
+
+// ==============================================================================
+// 10. Intranet — ข่าว & ปฏิทิน
+// ==============================================================================
+
+model AnnouncementCategory {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique @db.VarChar(150)
+  description String?          @db.Text
+  isActive    Boolean          @default(true) @map("is_active")
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  announcements Announcement[]
+  subscriptions AnnouncementSubscription[]
+
+  @@map("announcement_categories")
+}
+
+model Announcement {
+  id              String               @id @default(uuid()) @db.Uuid
+  categoryId      Int                  @map("category_id")
+  title           String               @db.VarChar(255)
+  content         String?              @db.Text
+  publisherUserId String               @map("publisher_user_id") @db.Uuid
+  publishDate     DateTime?            @map("publish_date") @db.Timestamptz(6)
+  expireDate      DateTime?            @map("expire_date") @db.Timestamptz(6)
+  status          String               @default("draft") @db.VarChar(50)
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  createdBy       String?              @map("created_by") @db.Uuid
+  updatedBy       String?              @map("updated_by") @db.Uuid
+  deletedBy       String?              @map("deleted_by") @db.Uuid
+  category        AnnouncementCategory @relation(fields: [categoryId], references: [id])
+
+  @@map("announcements")
+}
+
+model AnnouncementSubscription {
+  id           Int                  @id @default(autoincrement())
+  userId       String               @map("user_id") @db.Uuid
+  categoryId   Int                  @map("category_id")
+  isSubscribed Boolean              @default(true) @map("is_subscribed")
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  createdBy    String?              @map("created_by") @db.Uuid
+  updatedBy    String?              @map("updated_by") @db.Uuid
+  deletedBy    String?              @map("deleted_by") @db.Uuid
+  user         User                 @relation(fields: [userId], references: [id])
+  category     AnnouncementCategory @relation(fields: [categoryId], references: [id])
+
+  @@map("announcement_subscriptions")
+}
+
+model CalendarCategory {
+  id        Int             @id @default(autoincrement())
+  name      String          @db.VarChar(150)
+  colorCode String?         @map("color_code") @db.VarChar(20)
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  events    CalendarEvent[]
+
+  @@map("calendar_categories")
+}
+
+model CalendarEvent {
+  id              String            @id @default(uuid()) @db.Uuid
+  categoryId      Int               @map("category_id")
+  title           String            @db.VarChar(255)
+  description     String?           @db.Text
+  startTime       DateTime          @map("start_time") @db.Timestamptz(6)
+  endTime         DateTime          @map("end_time") @db.Timestamptz(6)
+  isAllDay        Boolean           @default(false) @map("is_all_day")
+  location        String?           @db.VarChar(255)
+  organizerUserId String            @map("organizer_user_id") @db.Uuid
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  createdBy       String?           @map("created_by") @db.Uuid
+  updatedBy       String?           @map("updated_by") @db.Uuid
+  deletedBy       String?           @map("deleted_by") @db.Uuid
+  category        CalendarCategory  @relation(fields: [categoryId], references: [id])
+  attendees       CalendarAttendee[]
+
+  @@map("calendar_events")
+}
+
+model CalendarAttendee {
+  id        String        @id @default(uuid()) @db.Uuid
+  eventId   String        @map("event_id") @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  status    String        @default("pending") @db.VarChar(50)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?       @map("created_by") @db.Uuid
+  updatedBy String?       @map("updated_by") @db.Uuid
+  deletedBy String?       @map("deleted_by") @db.Uuid
+  event     CalendarEvent @relation(fields: [eventId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
+
+  @@map("calendar_attendees")
+}
+
+// ==============================================================================
+// 11. Dashboard Widgets
+// ==============================================================================
+
+model DashboardLayout {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @db.VarChar(150)
+  isDefault Boolean   @default(false) @map("is_default")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@map("dashboard_layouts")
+}
+
+model DashboardWidget {
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String    @db.VarChar(150)
+  componentKey  String    @map("component_key") @db.VarChar(100)
+  defaultWidth  Int       @map("default_width")
+  defaultHeight Int       @map("default_height")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?   @map("created_by") @db.Uuid
+  updatedBy     String?   @map("updated_by") @db.Uuid
+  deletedBy     String?   @map("deleted_by") @db.Uuid
+
+  @@map("dashboard_widgets")
+}
+
+model DashboardUserSetting {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  isDefault    Boolean   @default(false) @map("is_default")
+  widgetConfig String?   @map("widget_config") @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy    String?   @map("created_by") @db.Uuid
+  updatedBy    String?   @map("updated_by") @db.Uuid
+  deletedBy    String?   @map("deleted_by") @db.Uuid
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@map("dashboard_user_settings")
+}
+
+// ==============================================================================
+// 12. Favorites
+// ==============================================================================
+
+model Favorite {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  entityType String    @map("entity_type") @db.VarChar(100)
+  entityId   String    @map("entity_id") @db.VarChar(50)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy  String?   @map("created_by") @db.Uuid
+  updatedBy  String?   @map("updated_by") @db.Uuid
+  deletedBy  String?   @map("deleted_by") @db.Uuid
+  user       User      @relation(fields: [userId], references: [id])
+
+  @@map("favorites")
+}
+
+// ==============================================================================
+// 13. Notifications
+// ==============================================================================
+
+model Notification {
+  id        String             @id @default(uuid()) @db.Uuid
+  title     String             @db.VarChar(255)
+  message   String?            @db.Text
+  actionUrl String?            @map("action_url") @db.VarChar(1024)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?            @map("created_by") @db.Uuid
+  updatedBy String?            @map("updated_by") @db.Uuid
+  deletedBy String?            @map("deleted_by") @db.Uuid
+  reads     NotificationRead[]
+
+  @@map("notifications")
+}
+
+model NotificationRead {
+  id             String       @id @default(uuid()) @db.Uuid
+  notificationId String       @map("notification_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  isRead         Boolean      @default(false) @map("is_read")
+  readAt         DateTime?    @map("read_at") @db.Timestamptz(6)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?      @map("created_by") @db.Uuid
+  updatedBy      String?      @map("updated_by") @db.Uuid
+  deletedBy      String?      @map("deleted_by") @db.Uuid
+  notification   Notification @relation(fields: [notificationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@map("notification_reads")
+}
+
+model PushNotification {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  deviceToken String    @map("device_token") @db.VarChar(1024)
+  platform    String    @db.VarChar(50)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy   String?   @map("created_by") @db.Uuid
+  updatedBy   String?   @map("updated_by") @db.Uuid
+  deletedBy   String?   @map("deleted_by") @db.Uuid
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@map("push_notifications")
+}
+
+// ==============================================================================
+// 14. Search
+// ==============================================================================
+
+model SearchIndex {
+  id         String    @id @default(uuid()) @db.Uuid
+  entityType String    @map("entity_type") @db.VarChar(100)
+  entityId   String    @map("entity_id") @db.VarChar(50)
+  searchText String    @map("search_text") @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy  String?   @map("created_by") @db.Uuid
+  updatedBy  String?   @map("updated_by") @db.Uuid
+  deletedBy  String?   @map("deleted_by") @db.Uuid
+
+  @@map("search_indexes")
+}
+
+// ==============================================================================
+// 15. API Management
+// ==============================================================================
+
+model ApiClient {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @db.VarChar(150)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedBy String?   @map("deleted_by") @db.Uuid
+  apiKeys   ApiKey[]
+
+  @@map("api_clients")
+}
+
+model ApiKey {
+  id         String        @id @default(uuid()) @db.Uuid
+  clientId   String        @map("client_id") @db.Uuid
+  keyHash    String        @unique @map("key_hash") @db.VarChar(255)
+  isActive   Boolean       @default(true) @map("is_active")
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdBy  String?       @map("created_by") @db.Uuid
+  updatedBy  String?       @map("updated_by") @db.Uuid
+  deletedBy  String?       @map("deleted_by") @db.Uuid
+  client     ApiClient     @relation(fields: [clientId], references: [id])
+  rateLimits ApiRateLimit[]
+
+  @@map("api_keys")
+}
+
+model ApiRateLimit {
+  id                String    @id @default(uuid()) @db.Uuid
+  apiKeyId          String    @map("api_key_id") @db.Uuid
+  requestsPerMinute Int       @map("requests_per_minute")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy         String?   @map("created_by") @db.Uuid
+  updatedBy         String?   @map("updated_by") @db.Uuid
+  deletedBy         String?   @map("deleted_by") @db.Uuid
+  apiKey            ApiKey    @relation(fields: [apiKeyId], references: [id])
+
+  @@map("api_rate_limits")
+}
+
+// ==============================================================================
+// 16. System Configuration
+// ==============================================================================
+
+model SystemConfig {
+  id           Int      @id @default(autoincrement())
+  configKey    String   @unique @map("config_key") @db.VarChar(100)
+  configValue  String   @map("config_value") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("system_configs")
+}
+
+model SystemJob {
+  id        String    @id @default(uuid()) @db.Uuid
+  jobName   String    @map("job_name") @db.VarChar(150)
+  status    String    @default("pending") @db.VarChar(50)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  @@map("system_jobs")
+}
+
+model ThemeSetting {
+  id           String    @id @default(uuid()) @db.Uuid
+  primaryColor String    @map("primary_color") @db.VarChar(20)
+  logoUrl      String?   @map("logo_url") @db.VarChar(1024)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy    String?   @map("created_by") @db.Uuid
+  updatedBy    String?   @map("updated_by") @db.Uuid
+  deletedBy    String?   @map("deleted_by") @db.Uuid
+
+  @@map("theme_settings")
+}
+
+model FeatureFlag {
+  id         Int      @id @default(autoincrement())
+  featureKey String   @unique @map("feature_key") @db.VarChar(100)
+  isEnabled  Boolean  @default(false) @map("is_enabled")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("feature_flags")
+}
+
+// ==============================================================================
+// 17. Project Management
+// ==============================================================================
+
+model ProjectType {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(150)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  projects  Project[]
+
+  @@map("project_types")
+}
+
+model Project {
+  id            String            @id @default(uuid()) @db.Uuid
+  projectTypeId Int               @map("project_type_id")
+  name          String            @db.VarChar(255)
+  description   String?           @db.Text
+  status        String            @default("planning") @db.VarChar(50)
+  startDate     DateTime?         @map("start_date") @db.Date
+  endDate       DateTime?         @map("end_date") @db.Date
+  ownerUserId   String            @map("owner_user_id") @db.Uuid
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?           @map("created_by") @db.Uuid
+  updatedBy     String?           @map("updated_by") @db.Uuid
+  deletedBy     String?           @map("deleted_by") @db.Uuid
+  projectType   ProjectType       @relation(fields: [projectTypeId], references: [id])
+  owner         User              @relation("ProjectOwner", fields: [ownerUserId], references: [id])
+  tasks         ProjectTask[]
+  members       ProjectMember[]
+
+  @@map("projects")
+}
+
+model ProjectTask {
+  id             String                  @id @default(uuid()) @db.Uuid
+  projectId      String                  @map("project_id") @db.Uuid
+  title          String                  @db.VarChar(255)
+  description    String?                 @db.Text
+  assignedUserId String                  @map("assigned_user_id") @db.Uuid
+  status         String                  @default("todo") @db.VarChar(50)
+  sortOrder      Int                     @default(0) @map("sort_order")
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?                 @map("created_by") @db.Uuid
+  updatedBy      String?                 @map("updated_by") @db.Uuid
+  deletedBy      String?                 @map("deleted_by") @db.Uuid
+  project        Project                 @relation(fields: [projectId], references: [id])
+  assignedUser   User                    @relation("TaskAssignee", fields: [assignedUserId], references: [id])
+  comments       ProjectTaskComment[]
+  dependencies   ProjectTaskDependency[] @relation("TaskDependency")
+  dependedOnBy   ProjectTaskDependency[] @relation("DependsOnTask")
+  timesheets     ProjectTimesheet[]
+
+  @@map("project_tasks")
+}
+
+model ProjectTaskDependency {
+  id              String      @id @default(uuid()) @db.Uuid
+  taskId          String      @map("task_id") @db.Uuid
+  dependsOnTaskId String      @map("depends_on_task_id") @db.Uuid
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdBy       String?     @map("created_by") @db.Uuid
+  updatedBy       String?     @map("updated_by") @db.Uuid
+  deletedBy       String?     @map("deleted_by") @db.Uuid
+  task            ProjectTask @relation("TaskDependency", fields: [taskId], references: [id])
+  dependsOnTask   ProjectTask @relation("DependsOnTask", fields: [dependsOnTaskId], references: [id])
+
+  @@map("project_task_dependencies")
+}
+
+model ProjectTaskComment {
+  id        String      @id @default(uuid()) @db.Uuid
+  taskId    String      @map("task_id") @db.Uuid
+  comment   String      @db.Text
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?     @map("created_by") @db.Uuid
+  updatedBy String?     @map("updated_by") @db.Uuid
+  deletedBy String?     @map("deleted_by") @db.Uuid
+  task      ProjectTask @relation(fields: [taskId], references: [id])
+
+  @@map("project_task_comments")
+}
+
+model ProjectTimesheet {
+  id         String      @id @default(uuid()) @db.Uuid
+  taskId     String      @map("task_id") @db.Uuid
+  userId     String      @map("user_id") @db.Uuid
+  hoursSpent Decimal     @map("hours_spent") @db.Decimal(5, 2)
+  workDate   DateTime    @map("work_date") @db.Date
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdBy  String?     @map("created_by") @db.Uuid
+  updatedBy  String?     @map("updated_by") @db.Uuid
+  deletedBy  String?     @map("deleted_by") @db.Uuid
+  task       ProjectTask @relation(fields: [taskId], references: [id])
+  user       User        @relation("TimesheetUser", fields: [userId], references: [id])
+
+  @@map("project_timesheets")
+}
+
+model ProjectMember {
+  id        String    @id @default(uuid()) @db.Uuid
+  projectId String    @map("project_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  role      String    @default("member") @db.VarChar(50)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedBy String?   @map("deleted_by") @db.Uuid
+  project   Project   @relation(fields: [projectId], references: [id])
+  user      User      @relation("ProjectMemberUser", fields: [userId], references: [id])
+
+  @@map("project_members")
+}
+
+// ==============================================================================
+// 18. E-Office Documents
+// ==============================================================================
+
+model EofficeDocument {
+  id                 String            @id @default(uuid()) @db.Uuid
+  docNo              String            @unique @map("doc_no") @db.VarChar(50)
+  secretLevel        String            @default("normal") @map("secret_level") @db.VarChar(50)
+  urgentLevel        String            @default("normal") @map("urgent_level") @db.VarChar(50)
+  title              String            @db.VarChar(255)
+  senderDepartmentId Int               @map("sender_department_id")
+  status             String            @default("draft") @db.VarChar(50)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  createdBy          String?           @map("created_by") @db.Uuid
+  updatedBy          String?           @map("updated_by") @db.Uuid
+  deletedBy          String?           @map("deleted_by") @db.Uuid
+  senderDepartment   Department        @relation(fields: [senderDepartmentId], references: [id])
+  routings           EofficeRouting[]
+  signatures         EofficeSignature[]
+
+  @@map("eoffice_documents")
+}
+
+model EofficeRoutingTemplate {
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String    @db.VarChar(150)
+  workflowSteps String?   @map("workflow_steps") @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?   @map("created_by") @db.Uuid
+  updatedBy     String?   @map("updated_by") @db.Uuid
+  deletedBy     String?   @map("deleted_by") @db.Uuid
+
+  @@map("eoffice_routing_templates")
+}
+
+model EofficeRouting {
+  id                String           @id @default(uuid()) @db.Uuid
+  eofficeDocumentId String           @map("eoffice_document_id") @db.Uuid
+  senderUserId      String           @map("sender_user_id") @db.Uuid
+  receiverUserId    String           @map("receiver_user_id") @db.Uuid
+  actionType        String           @default("forward") @map("action_type") @db.VarChar(50)
+  remark            String?          @db.Text
+  isRead            Boolean          @default(false) @map("is_read")
+  readAt            DateTime?        @map("read_at") @db.Timestamptz(6)
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  createdBy         String?          @map("created_by") @db.Uuid
+  updatedBy         String?          @map("updated_by") @db.Uuid
+  deletedBy         String?          @map("deleted_by") @db.Uuid
+  eofficeDocument   EofficeDocument  @relation(fields: [eofficeDocumentId], references: [id])
+  sender            User             @relation("RoutingSender", fields: [senderUserId], references: [id])
+  receiver          User             @relation("RoutingReceiver", fields: [receiverUserId], references: [id])
+
+  @@map("eoffice_routings")
+}
+
+model EofficeSignature {
+  id                String           @id @default(uuid()) @db.Uuid
+  eofficeDocumentId String           @map("eoffice_document_id") @db.Uuid
+  userId            String           @map("user_id") @db.Uuid
+  signatureImageUrl String?          @map("signature_image_url") @db.VarChar(1024)
+  positionX         Decimal?         @map("position_x") @db.Decimal(10, 2)
+  positionY         Decimal?         @map("position_y") @db.Decimal(10, 2)
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  createdBy         String?          @map("created_by") @db.Uuid
+  updatedBy         String?          @map("updated_by") @db.Uuid
+  deletedBy         String?          @map("deleted_by") @db.Uuid
+  eofficeDocument   EofficeDocument  @relation(fields: [eofficeDocumentId], references: [id])
+  user              User             @relation("SignatureUser", fields: [userId], references: [id])
+
+  @@map("eoffice_signatures")
+}
+
+model PhysicalArchive {
+  id             String    @id @default(uuid()) @db.Uuid
+  title          String    @db.VarChar(255)
+  location       String?   @db.VarChar(255)
+  retentionYears Int?      @map("retention_years") @db.SmallInt
+  expireDate     DateTime? @map("expire_date") @db.Date
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?   @map("created_by") @db.Uuid
+  updatedBy      String?   @map("updated_by") @db.Uuid
+  deletedBy      String?   @map("deleted_by") @db.Uuid
+
+  @@map("physical_archives")
+}
+
+// ==============================================================================
+// 19. HR System
+// ==============================================================================
+
+model HrEmployeeProfile {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @unique @map("user_id") @db.Uuid
+  managerUserId String?   @map("manager_user_id") @db.Uuid
+  hireDate      DateTime? @map("hire_date") @db.Date
+  employeeType  String    @default("full_time") @map("employee_type") @db.VarChar(50)
+  bankAccountNo String?   @map("bank_account_no") @db.VarChar(50)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?   @map("created_by") @db.Uuid
+  updatedBy     String?   @map("updated_by") @db.Uuid
+  deletedBy     String?   @map("deleted_by") @db.Uuid
+  user          User      @relation("HrProfile", fields: [userId], references: [id])
+
+  @@map("hr_employee_profiles")
+}
+
+model HrLeaveRequest {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  leaveType      String    @map("leave_type") @db.VarChar(100)
+  startDate      DateTime  @map("start_date") @db.Date
+  endDate        DateTime  @map("end_date") @db.Date
+  status         String    @default("pending") @db.VarChar(50)
+  approverUserId String?   @map("approver_user_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?   @map("created_by") @db.Uuid
+  updatedBy      String?   @map("updated_by") @db.Uuid
+  deletedBy      String?   @map("deleted_by") @db.Uuid
+  user           User      @relation("LeaveRequester", fields: [userId], references: [id])
+
+  @@map("hr_leave_requests")
+}
+
+model HrOvertimeRequest {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  otDate         DateTime  @map("ot_date") @db.Date
+  hoursRequested Decimal   @map("hours_requested") @db.Decimal(5, 2)
+  status         String    @default("pending") @db.VarChar(50)
+  approverUserId String?   @map("approver_user_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?   @map("created_by") @db.Uuid
+  updatedBy      String?   @map("updated_by") @db.Uuid
+  deletedBy      String?   @map("deleted_by") @db.Uuid
+  user           User      @relation("OvertimeRequester", fields: [userId], references: [id])
+
+  @@map("hr_overtime_requests")
+}
+
+model HrExpenseClaim {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  title          String    @db.VarChar(255)
+  amount         Decimal   @db.Decimal(15, 2)
+  status         String    @default("pending") @db.VarChar(50)
+  approverUserId String?   @map("approver_user_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?   @map("created_by") @db.Uuid
+  updatedBy      String?   @map("updated_by") @db.Uuid
+  deletedBy      String?   @map("deleted_by") @db.Uuid
+  user           User      @relation("ExpenseClaimer", fields: [userId], references: [id])
+
+  @@map("hr_expense_claims")
+}
+
+model HrAttendance {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  clockInTime  DateTime? @map("clock_in_time") @db.Timestamptz(6)
+  clockOutTime DateTime? @map("clock_out_time") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy    String?   @map("created_by") @db.Uuid
+  updatedBy    String?   @map("updated_by") @db.Uuid
+  deletedBy    String?   @map("deleted_by") @db.Uuid
+  user         User      @relation("AttendanceUser", fields: [userId], references: [id])
+
+  @@map("hr_attendances")
+}
+
+model HrPayslip {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  payPeriod String    @map("pay_period") @db.VarChar(50)
+  netSalary Decimal   @map("net_salary") @db.Decimal(15, 2)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedBy String?   @map("deleted_by") @db.Uuid
+  user      User      @relation("PayslipUser", fields: [userId], references: [id])
+
+  @@map("hr_payslips")
+}
+
+// ==============================================================================
+// 20. ERP System
+// ==============================================================================
+
+model ErpVendor {
+  id          String             @id @default(uuid()) @db.Uuid
+  taxId       String             @unique @map("tax_id") @db.VarChar(20)
+  companyName String             @map("company_name") @db.VarChar(150)
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  createdBy   String?            @map("created_by") @db.Uuid
+  updatedBy   String?            @map("updated_by") @db.Uuid
+  deletedBy   String?            @map("deleted_by") @db.Uuid
+  poList      ErpPurchaseOrder[]
+
+  @@map("erp_vendors")
+}
+
+model ErpPurchaseRequest {
+  id              String       @id @default(uuid()) @db.Uuid
+  prNo            String       @unique @map("pr_no") @db.VarChar(50)
+  requesterUserId String       @map("requester_user_id") @db.Uuid
+  status          String       @default("draft") @db.VarChar(50)
+  totalAmount     Decimal?     @map("total_amount") @db.Decimal(15, 2)
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  createdBy       String?      @map("created_by") @db.Uuid
+  updatedBy       String?      @map("updated_by") @db.Uuid
+  deletedBy       String?      @map("deleted_by") @db.Uuid
+  requester       User         @relation("PRRequester", fields: [requesterUserId], references: [id])
+  items           ErpPrItem[]
+
+  @@map("erp_purchase_requests")
+}
+
+model ErpPrItem {
+  id        String             @id @default(uuid()) @db.Uuid
+  prId      String             @map("pr_id") @db.Uuid
+  itemName  String             @map("item_name") @db.VarChar(255)
+  quantity  Int                @default(1)
+  unitPrice Decimal            @map("unit_price") @db.Decimal(15, 2)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?            @map("created_by") @db.Uuid
+  updatedBy String?            @map("updated_by") @db.Uuid
+  deletedBy String?            @map("deleted_by") @db.Uuid
+  pr        ErpPurchaseRequest @relation(fields: [prId], references: [id])
+
+  @@map("erp_pr_items")
+}
+
+model ErpPurchaseOrder {
+  id        String            @id @default(uuid()) @db.Uuid
+  poNo      String            @unique @map("po_no") @db.VarChar(50)
+  vendorId  String            @map("vendor_id") @db.Uuid
+  status    String            @default("draft") @db.VarChar(50)
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?           @map("created_by") @db.Uuid
+  updatedBy String?           @map("updated_by") @db.Uuid
+  deletedBy String?           @map("deleted_by") @db.Uuid
+  vendor    ErpVendor         @relation(fields: [vendorId], references: [id])
+  items     ErpPoItem[]
+  receipts  ErpGoodsReceipt[]
+
+  @@map("erp_purchase_orders")
+}
+
+model ErpPoItem {
+  id        String           @id @default(uuid()) @db.Uuid
+  poId      String           @map("po_id") @db.Uuid
+  itemName  String           @map("item_name") @db.VarChar(255)
+  quantity  Int              @default(1)
+  unitPrice Decimal          @map("unit_price") @db.Decimal(15, 2)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?          @map("created_by") @db.Uuid
+  updatedBy String?          @map("updated_by") @db.Uuid
+  deletedBy String?          @map("deleted_by") @db.Uuid
+  po        ErpPurchaseOrder @relation(fields: [poId], references: [id])
+
+  @@map("erp_po_items")
+}
+
+model ErpGoodsReceipt {
+  id             String           @id @default(uuid()) @db.Uuid
+  poId           String           @map("po_id") @db.Uuid
+  receiverUserId String           @map("receiver_user_id") @db.Uuid
+  receiptDate    DateTime?        @map("receipt_date") @db.Date
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?          @map("created_by") @db.Uuid
+  updatedBy      String?          @map("updated_by") @db.Uuid
+  deletedBy      String?          @map("deleted_by") @db.Uuid
+  po             ErpPurchaseOrder @relation(fields: [poId], references: [id])
+  receiver       User             @relation("GoodsReceiver", fields: [receiverUserId], references: [id])
+
+  @@map("erp_goods_receipts")
+}
+
+model ErpAsset {
+  id             String                  @id @default(uuid()) @db.Uuid
+  assetNo        String                  @unique @map("asset_no") @db.VarChar(50)
+  name           String                  @db.VarChar(255)
+  purchaseValue  Decimal?                @map("purchase_value") @db.Decimal(15, 2)
+  status         String                  @default("active") @db.VarChar(50)
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?                 @map("created_by") @db.Uuid
+  updatedBy      String?                 @map("updated_by") @db.Uuid
+  deletedBy      String?                 @map("deleted_by") @db.Uuid
+  depreciations  ErpAssetDepreciation[]
+  maintenances   ErpAssetMaintenance[]
+
+  @@map("erp_assets")
+}
+
+model ErpAssetDepreciation {
+  id                 String    @id @default(uuid()) @db.Uuid
+  assetId            String    @map("asset_id") @db.Uuid
+  year               Int
+  depreciationAmount Decimal   @map("depreciation_amount") @db.Decimal(15, 2)
+  netValue           Decimal   @map("net_value") @db.Decimal(15, 2)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy          String?   @map("created_by") @db.Uuid
+  updatedBy          String?   @map("updated_by") @db.Uuid
+  deletedBy          String?   @map("deleted_by") @db.Uuid
+  asset              ErpAsset  @relation(fields: [assetId], references: [id])
+
+  @@map("erp_asset_depreciations")
+}
+
+model ErpAssetMaintenance {
+  id              String    @id @default(uuid()) @db.Uuid
+  assetId         String    @map("asset_id") @db.Uuid
+  maintenanceDate DateTime  @map("maintenance_date") @db.Date
+  cost            Decimal?  @db.Decimal(15, 2)
+  details         String?   @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy       String?   @map("created_by") @db.Uuid
+  updatedBy       String?   @map("updated_by") @db.Uuid
+  deletedBy       String?   @map("deleted_by") @db.Uuid
+  asset           ErpAsset  @relation(fields: [assetId], references: [id])
+
+  @@map("erp_asset_maintenances")
+}
+
+// ==============================================================================
+// 21. Academic Management
+// ==============================================================================
+
+model AcademicCourse {
+  id            String                  @id @default(uuid()) @db.Uuid
+  courseCode    String                  @unique @map("course_code") @db.VarChar(50)
+  nameTh        String                  @map("name_th") @db.VarChar(255)
+  credits       Int                     @db.SmallInt
+  createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?                 @map("created_by") @db.Uuid
+  updatedBy     String?                 @map("updated_by") @db.Uuid
+  deletedBy     String?                 @map("deleted_by") @db.Uuid
+  teachingLoads AcademicTeachingLoad[]
+
+  @@map("academic_courses")
+}
+
+model AcademicRoom {
+  id            String                  @id @default(uuid()) @db.Uuid
+  roomCode      String                  @unique @map("room_code") @db.VarChar(50)
+  roomName      String?                 @map("room_name") @db.VarChar(150)
+  building      String?                 @db.VarChar(100)
+  capacity      Int?
+  roomType      String                  @default("classroom") @map("room_type") @db.VarChar(50)
+  status        String                  @default("active") @db.VarChar(50)
+  createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?                 @map("created_by") @db.Uuid
+  updatedBy     String?                 @map("updated_by") @db.Uuid
+  deletedBy     String?                 @map("deleted_by") @db.Uuid
+  teachingLoads AcademicTeachingLoad[]
+
+  @@map("academic_rooms")
+}
+
+model AcademicTeachingLoad {
+  id        String         @id @default(uuid()) @db.Uuid
+  courseId  String         @map("course_id") @db.Uuid
+  roomId    String         @map("room_id") @db.Uuid
+  userId    String         @map("user_id") @db.Uuid
+  section   String         @db.VarChar(50)
+  studyDay  String?        @map("study_day") @db.VarChar(20)
+  startTime DateTime?      @map("start_time") @db.Time(4)
+  endTime   DateTime?      @map("end_time") @db.Time(4)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?        @map("created_by") @db.Uuid
+  updatedBy String?        @map("updated_by") @db.Uuid
+  deletedBy String?        @map("deleted_by") @db.Uuid
+  course    AcademicCourse @relation(fields: [courseId], references: [id])
+  room      AcademicRoom   @relation(fields: [roomId], references: [id])
+  user      User           @relation("TeachingLoadUser", fields: [userId], references: [id])
+
+  @@map("academic_teaching_loads")
+}
+
+// ==============================================================================
+// 22. Facility & Booking
+// ==============================================================================
+
+model MeetingRoom {
+  id        String        @id @default(uuid()) @db.Uuid
+  name      String        @db.VarChar(150)
+  capacity  Int
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?       @map("created_by") @db.Uuid
+  updatedBy String?       @map("updated_by") @db.Uuid
+  deletedBy String?       @map("deleted_by") @db.Uuid
+  bookings  RoomBooking[]
+
+  @@map("meeting_rooms")
+}
+
+model RoomBooking {
+  id            String      @id @default(uuid()) @db.Uuid
+  roomId        String      @map("room_id") @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  title         String      @db.VarChar(255)
+  startTime     DateTime    @map("start_time") @db.Timestamptz(6)
+  endTime       DateTime    @map("end_time") @db.Timestamptz(6)
+  attendeeCount Int?        @map("attendee_count")
+  msTeamsLink   String?     @map("ms_teams_link") @db.VarChar(2048)
+  status        String      @default("confirmed") @db.VarChar(50)
+  remark        String?     @db.Text
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdBy     String?     @map("created_by") @db.Uuid
+  updatedBy     String?     @map("updated_by") @db.Uuid
+  deletedBy     String?     @map("deleted_by") @db.Uuid
+  room          MeetingRoom @relation(fields: [roomId], references: [id])
+  user          User        @relation("RoomBookingUser", fields: [userId], references: [id])
+
+  @@map("room_bookings")
+}
+
+model FleetVehicle {
+  id           String    @id @default(uuid()) @db.Uuid
+  licensePlate String    @unique @map("license_plate") @db.VarChar(50)
+  model        String?   @db.VarChar(150)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy    String?   @map("created_by") @db.Uuid
+  updatedBy    String?   @map("updated_by") @db.Uuid
+  deletedBy    String?   @map("deleted_by") @db.Uuid
+
+  @@map("fleet_vehicles")
+}
+
+// ==============================================================================
+// 23. Helpdesk / IT Support
+// ==============================================================================
+
+model HelpdeskTicket {
+  id              String                 @id @default(uuid()) @db.Uuid
+  requesterUserId String                 @map("requester_user_id") @db.Uuid
+  title           String                 @db.VarChar(255)
+  status          String                 @default("open") @db.VarChar(50)
+  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?              @map("deleted_at") @db.Timestamptz(6)
+  createdBy       String?                @map("created_by") @db.Uuid
+  updatedBy       String?                @map("updated_by") @db.Uuid
+  deletedBy       String?                @map("deleted_by") @db.Uuid
+  requester       User                   @relation("TicketRequester", fields: [requesterUserId], references: [id])
+  histories       HelpdeskTicketHistory[]
+
+  @@map("helpdesk_tickets")
+}
+
+model HelpdeskSla {
+  id                 Int       @id @default(autoincrement())
+  priority           String    @db.VarChar(50)
+  resolveWithinHours Int       @map("resolve_within_hours")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy          String?   @map("created_by") @db.Uuid
+  updatedBy          String?   @map("updated_by") @db.Uuid
+  deletedBy          String?   @map("deleted_by") @db.Uuid
+
+  @@map("helpdesk_slas")
+}
+
+model HelpdeskTicketHistory {
+  id        String          @id @default(uuid()) @db.Uuid
+  ticketId  String          @map("ticket_id") @db.Uuid
+  oldStatus String?         @map("old_status") @db.VarChar(50)
+  newStatus String          @map("new_status") @db.VarChar(50)
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  createdBy String?         @map("created_by") @db.Uuid
+  updatedBy String?         @map("updated_by") @db.Uuid
+  deletedBy String?         @map("deleted_by") @db.Uuid
+  ticket    HelpdeskTicket  @relation(fields: [ticketId], references: [id])
+
+  @@map("helpdesk_ticket_histories")
+}

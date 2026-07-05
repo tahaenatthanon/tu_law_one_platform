@@ -1,26 +1,108 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════
+   TULAW ONE PLATFORM — Theme
+   อัตลักษณ์สีมหาวิทยาลัยธรรมศาสตร์ (Flat Design)
+   สัดส่วน 60-30-10 | WCAG AA
+   ═══════════════════════════════════════════ */
+
+/* ─── CSS Variables ─── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ═══ 60% — Background / Surface ═══ */
+  --tu-bg:         #FFFFFF;
+  --tu-surface:    #F5F5F5;
+  --tu-surface-alt:#FAFAFA;
+
+  /* ═══ 30% — Primary Yellow ═══ */
+  --tu-primary:        #FDB813;
+  --tu-primary-light:  #FFF3CD;
+  --tu-primary-dark:   #E5A800;
+  --tu-primary-text:   #1A1A2E;
+
+  /* ═══ 10% — Secondary Red ═══ */
+  --tu-secondary:       #A31D1D;
+  --tu-secondary-light: #FCE4E8;
+  --tu-secondary-dark:  #8B1515;
+
+  /* ═══ Text ═══ */
+  --tu-text-primary:    #1A1A2E;
+  --tu-text-secondary:  #6B7280;
+  --tu-text-inverse:    #FFFFFF;
+  --tu-text-muted:      #9CA3AF;
+
+  /* ═══ Border ═══ */
+  --tu-border:          #E5E7EB;
+  --tu-border-dark:     #D1D5DB;
+
+  /* ═══ Status Colors ═══ */
+  --tu-success:         #28A745;
+  --tu-success-light:   #D4EDDA;
+  --tu-warning:         #FDB813;
+  --tu-warning-light:   #FFF3CD;
+  --tu-error:           #A31D1D;
+  --tu-error-light:     #FCE4E8;
+  --tu-info:            #4A90D9;
+  --tu-info-light:      #D6E9F8;
+
+  /* ═══ Dark Surfaces ═══ */
+  --tu-dark-bg:         #1A1A2E;
+  --tu-dark-surface:    #252540;
+
+  /* ═══ Shorthands ═══ */
+  --background: var(--tu-bg);
+  --foreground: var(--tu-text-primary);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-prompt), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ─── Base ─── */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--tu-bg);
+  color: var(--tu-text-primary);
+  font-family: var(--font-prompt), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Flat Design Utility Classes ─── */
+/* No gradients. No shadows. No glassmorphism. Solid colors only. */
+
+.tu-btn-primary {
+  background: var(--tu-primary);
+  color: var(--tu-primary-text);
+  border: none;
+}
+.tu-btn-primary:hover {
+  background: var(--tu-primary-dark);
+}
+.tu-btn-primary:focus-visible {
+  outline: 2px solid var(--tu-primary-dark);
+  outline-offset: 2px;
+}
+
+.tu-btn-secondary {
+  background: var(--tu-secondary);
+  color: var(--tu-text-inverse);
+  border: none;
+}
+.tu-btn-secondary:hover {
+  background: var(--tu-secondary-dark);
+}
+.tu-btn-secondary:focus-visible {
+  outline: 2px solid var(--tu-secondary-dark);
+  outline-offset: 2px;
+}
+
+.tu-btn-outline {
+  background: transparent;
+  color: var(--tu-text-primary);
+  border: 1.5px solid var(--tu-border-dark);
+}
+.tu-btn-outline:hover {
+  border-color: var(--tu-primary);
+  color: var(--tu-primary-dark);
 }
