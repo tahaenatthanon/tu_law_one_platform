@@ -1,12 +1,25 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { authenticateAdUser } from "./ldap";
 import { createAuditLog } from "./audit";
 
+/** ห่อ Promise ด้วย timeout — ใช้กับ LDAP ที่อาจค้าง */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
+  ]);
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       id: "credentials",
       name: "Email & Password",
@@ -24,14 +37,21 @@ export const authOptions: NextAuthOptions = {
           (req?.headers?.["x-real-ip"] as string) ||
           "unknown";
 
-        const userAgent = (req?.headers?.["user-agent"] as string) || null;
+        const rawUserAgent = req?.headers?.["user-agent"];
+        const userAgent: string | undefined =
+          typeof rawUserAgent === "string" ? rawUserAgent : undefined;
 
         try {
-          // ─── Step 1: ลอง authenticate ผ่าน Active Directory ก่อน ───
-          const adUser = await authenticateAdUser(
-            credentials.email,
-            credentials.password
-          );
+          // ─── Step 1: ลอง authenticate ผ่าน Active Directory (ถ้าเปิดใช้) ───
+          const ldapEnabled = process.env.LDAP_ENABLED === "true";
+          let adUser: Awaited<ReturnType<typeof authenticateAdUser>> = null;
+
+          if (ldapEnabled) {
+            adUser = await withTimeout(
+              authenticateAdUser(credentials.email, credentials.password),
+              5000 // timeout 5 วิ
+            );
+          }
 
           if (adUser) {
             // หา user ใน DB (ต้องมีอยู่แล้วจาก AD Sync)
@@ -52,9 +72,8 @@ export const authOptions: NextAuthOptions = {
                   email: adUser.email,
                   firstNameTh: adUser.firstNameTh,
                   lastNameTh: adUser.lastNameTh,
-                  adSynced: true,
-                  adDn: adUser.dn,
-                  status: "active",
+                  departmentId: 1, // default department
+                  status: "ACTIVE",
                 },
                 include: {
                   userRoles: {
@@ -71,10 +90,9 @@ export const authOptions: NextAuthOptions = {
               userId: user.id,
               action: "USER_LOGIN",
               module: "auth",
-              detail: `AD login สำเร็จ: ${user.email}`,
+              detail: `DB login สำเร็จ: ${user.email} (${roleNames.join(",") || "unknown"})`,
               ipAddress,
               userAgent,
-              roleAtTime: roleNames.join(",") || "unknown",
             });
 
             return {
@@ -110,7 +128,7 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
-          if (dbUser.status !== "active") {
+          if (dbUser.status !== "ACTIVE") {
             await createAuditLog({
               userId: dbUser.id,
               action: "USER_LOGIN_FAILED",
@@ -145,10 +163,9 @@ export const authOptions: NextAuthOptions = {
             userId: dbUser.id,
             action: "USER_LOGIN",
             module: "auth",
-            detail: `DB login สำเร็จ: ${dbUser.email}`,
+            detail: `DB login สำเร็จ: ${dbUser.email} (${dbRoleNames.join(",") || "unknown"})`,
             ipAddress,
             userAgent,
-            roleAtTime: dbRoleNames.join(",") || "unknown",
           });
 
           return {
@@ -173,7 +190,81 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        const googleEmail = profile?.email ?? user.email;
+        if (!googleEmail) return false;
+
+        const ipAddress = "google-sso";
+        const userAgent = undefined;
+
+        try {
+          // หา user ใน DB (ต้องมีอยู่แล้ว)
+          let dbUser = await prisma.user.findUnique({
+            where: { email: googleEmail },
+            include: {
+              userRoles: {
+                where: { isActive: true },
+                include: { role: true },
+              },
+            },
+          });
+
+          if (!dbUser) {
+            // User ยังไม่มีใน DB → สร้างให้ (fallback)
+            dbUser = await prisma.user.create({
+              data: {
+                email: googleEmail,
+                firstNameTh: (profile as any)?.given_name ?? user.name?.split(" ")[0] ?? "",
+                lastNameTh: (profile as any)?.family_name ?? user.name?.split(" ").slice(1).join(" ") ?? "",
+                departmentId: 1, // default department
+                status: "ACTIVE",
+              },
+              include: {
+                userRoles: {
+                  where: { isActive: true },
+                  include: { role: true },
+                },
+              },
+            });
+          }
+
+          const roleNames = dbUser.userRoles.map((ur) => ur.role.roleCode);
+
+          await createAuditLog({
+            userId: dbUser.id,
+            action: "USER_LOGIN",
+            module: "auth",
+            detail: `Google SSO login สำเร็จ: ${googleEmail} (${roleNames.join(",") || "unknown"})`,
+            ipAddress,
+            userAgent,
+          });
+
+          (user as any).dbRoles = roleNames;
+          (user as any).dbDepartmentId = dbUser.departmentId;
+          (user as any).dbStatus = dbUser.status;
+
+          return true;
+        } catch (error) {
+          console.error("[Auth] Google signIn error:", error);
+          return false;
+        }
+      }
+
+      return true; // credentials provider — allow
+    },
+
+    async jwt({ token, user, account }) {
+      // Google SSO — attach roles from signIn callback
+      if (account?.provider === "google" && user) {
+        token.id = (user as any).dbId ?? user.id;
+        token.roles = (user as any).dbRoles ?? [];
+        token.departmentId = (user as any).dbDepartmentId;
+        token.status = (user as any).dbStatus ?? "ACTIVE";
+        return token;
+      }
+
+      // Credentials login
       if (user) {
         token.id = user.id;
         token.roles = (user as any).roles || [];

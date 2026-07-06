@@ -98,6 +98,28 @@ tulaw-oneplatform/
 - Use shadcn/ui components for consistent design
 - Support Thai language (font: prompt)
 
+### Color Theme (TU Law — ธรรมศาสตร์นิติศาสตร์)
+ใช้ชุดสีนี้เป็นหลัก **ทุกหน้า** ของแพลตฟอร์ม:
+
+| โทน          | Hex Code   | Tailwind Usage          | บทบาท |
+|-------------|------------|-------------------------|--------|
+| **แดง TU**  | `#8B1515`  | `bg-[#8B1515]`         | พื้นหลัง Sidebar, แถบนำทาง, องค์ประกอบหลัก |
+| **ทอง TU**  | `#FDB813`  | `bg-[#FDB813]`         | ปุ่มหลัก, Active state, ไฮไลท์, ตราสัญลักษณ์ |
+| **แดงเข้ม** | `#A31D1D`  | `text-[#A31D1D]`       | ลิงก์, ข้อความเน้น, ปุ่มรอง |
+| **พื้นหลัง**| `#F5F5F5`  | `bg-[#F5F5F5]`         | พื้นหลัง Dashboard |
+| **ข้อความหลัก** | `#1A1A2E` | `text-[#1A1A2E]`    | ข้อความหลัก, หัวข้อ |
+| **ข้อความรอง** | `#6B7280` | `text-[#6B7280]`    | คำอธิบาย, ข้อความช่วยเหลือ |
+| **ขอบ/เส้น** | `#D1D5DB` | `border-[#D1D5DB]`    | ขอบ Input, เส้นแบ่ง |
+| **ขาว**     | `#FFFFFF`  | `bg-white`              | พื้นหลัง Card, ฟอร์ม |
+
+**กฎการใช้สี:**
+- **Sidebar:** พื้นหลัง `#8B1515` (แดง TU), ข้อความ/ไอคอน `white`, Active item `#FDB813` (ทอง) พร้อมตัวอักษร `#8B1515`
+- **ปุ่มหลัก (Primary):** พื้น `#FDB813` ตัวอักษร `#1A1A2E`, hover `#E5A800`
+- **ปุ่มรอง/ลิงก์:** ตัวอักษร `#A31D1D`, hover `#8B1515`
+- **Badge/Highlight:** `#FDB813` หรือ `#A31D1D` ตามบริบท
+- **Error/Alert:** พื้น `#FCE4E8` ขอบ `#A31D1D` ตัวอักษร `#A31D1D`
+- **Success:** พื้น `#ECFDF5` ขอบ `#059669` ตัวอักษร `#065F46`
+
 ---
 
 ## Modules (10 Modules Total)
@@ -159,11 +181,11 @@ tulaw-oneplatform/
 
 | Role         | Access Level                                              |
 |--------------|-----------------------------------------------------------|
-| Super Admin  | Full system access, all modules, API keys, user management |
-| System Admin | System care, user management, AD Sync, audit, documents    |
-| Dean         | Dashboard, reports, project approval, chat, room booking   |
-| Dept Admin   | Department dashboard, announcements, chat rooms, docs      |
-| User         | Dashboard, chat, meeting book, document upload, projects   |
+| Super Admin  | Full system access, all modules, API keys, user management<br/>เพิ่ม/ลบ Application (URL, Icon, ชื่อ), สร้างกลุ่ม Application, จัดการกลุ่มผู้ใช้งาน, กำหนดสิทธิ์ Dashboard |
+| System Admin | System care, user management, AD Sync, audit, documents<br/>เพิ่ม/ลบ Application (URL, Icon, ชื่อ), สร้างกลุ่ม Application, จัดการกลุ่มผู้ใช้งาน, กำหนดสิทธิ์ Dashboard |
+| Dean         | ดูข้อมูล Dashboard ได้ทั้งหมด, reports, project approval, chat, room booking |
+| Dept Admin   | ดูข้อมูลในส่วนของแผนกตนเองเท่านั้น, department announcements, chat rooms, docs |
+| User         | แสดงรายการ Application ตามสิทธิ์, แสดงตารางนัดหมายจากปฏิทิน M365, update ข้อมูล Dashboard ตามสิทธิ์ (auto-refresh หลังบันทึก), จัดเก็บข้อมูลรายเดือน (แก้ไขย้อนหลังได้), chat, meeting book, document upload, projects |
 | Viewer       | Read-only: dashboard, announcements, projects, documents   |
 
 **Implementation:** Store roles in JWT. Protect API routes with role-check middleware. Protect pages with layout-level auth checks.

@@ -7,7 +7,6 @@ interface AuditLogInput {
   detail?: string;
   ipAddress?: string;
   userAgent?: string;
-  roleAtTime?: string;
 }
 
 /**
@@ -17,13 +16,12 @@ export async function createAuditLog(input: AuditLogInput): Promise<void> {
   try {
     await prisma.auditLog.create({
       data: {
-        userId: input.userId ?? null,
+        user: input.userId ? { connect: { id: input.userId } } : undefined,
         action: input.action,
         module: input.module,
-        detail: input.detail ?? null,
-        ipAddress: input.ipAddress ?? null,
-        userAgent: input.userAgent ?? null,
-        roleAtTime: input.roleAtTime ?? null,
+        detail: input.detail ?? undefined,
+        ipAddress: input.ipAddress ?? undefined,
+        userAgent: input.userAgent ?? undefined,
       },
     });
   } catch (error) {

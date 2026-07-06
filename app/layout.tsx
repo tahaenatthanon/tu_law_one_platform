@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Prompt } from "next/font/google";
+import AuthProvider from "@/components/auth/auth-provider";
 import "./globals.css";
 
 const prompt = Prompt({
@@ -22,7 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th" className={`${prompt.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

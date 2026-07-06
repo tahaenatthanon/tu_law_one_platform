@@ -21,7 +21,11 @@ export async function authenticateAdUser(
   password: string
 ): Promise<AdUserResult | null> {
   return new Promise((resolve) => {
-    const client = ldap.createClient({ url: LDAP_URL });
+    const client = ldap.createClient({
+      url: LDAP_URL,
+      connectTimeout: 5000, // 5 วิ timeout
+      timeout: 5000,
+    });
     const username = email.split("@")[0];
     const userDn = `uid=${username},${LDAP_BASE_DN}`;
 
@@ -53,12 +57,16 @@ export async function authenticateAdUser(
           found = true;
 
           const attrs = entry.pojo.attributes;
+          const attrMap: Record<string, any> = {};
+          if (Array.isArray(attrs)) {
+            attrs.forEach((a: any) => {
+              attrMap[a.type] = a.values;
+            });
+          }
           const result: AdUserResult = {
-            email: attrs.mail?.values?.[0] || email,
-            firstNameTh:
-              (attrs.givenName?.values?.[0] as string) || username,
-            lastNameTh:
-              (attrs.sn?.values?.[0] as string) || "",
+            email: attrMap.mail?.[0] || email,
+            firstNameTh: (attrMap.givenName?.[0] as string) || username,
+            lastNameTh: (attrMap.sn?.[0] as string) || "",
             dn: entry.pojo.objectName || userDn,
           };
 
@@ -106,8 +114,6 @@ async function syncUserFromAd(adUser: AdUserResult): Promise<void> {
         data: {
           firstNameTh: adUser.firstNameTh,
           lastNameTh: adUser.lastNameTh,
-          adSynced: true,
-          adDn: adUser.dn,
         },
       });
     }

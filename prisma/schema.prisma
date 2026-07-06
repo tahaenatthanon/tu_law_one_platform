@@ -7,6 +7,17 @@ datasource db {
 }
 
 // ==============================================================================
+// ENUMS
+// ==============================================================================
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  MFA_PENDING
+  @@map("user_status")
+}
+
+// ==============================================================================
 // 1. ภูมิศาสตร์ (Geography)
 // ==============================================================================
 
@@ -159,7 +170,8 @@ model User {
   firstNameTh   String            @map("first_name_th") @db.VarChar(100)
   lastNameTh    String            @map("last_name_th") @db.VarChar(100)
   departmentId  Int               @map("department_id")
-  status        String            @default("active") @db.VarChar(50)
+  passwordHash  String?           @map("password_hash") @db.VarChar(255)
+  status        UserStatus        @default(ACTIVE)
   createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt     DateTime?         @map("deleted_at") @db.Timestamptz(6)
