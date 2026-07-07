@@ -2,10 +2,9 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,8 +43,9 @@ function LoginForm() {
     if (result?.error) {
       setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองอีกครั้ง");
     } else if (result?.ok) {
-      router.push("/dashboard/application-hub");
-      router.refresh();
+      // ใช้ window.location แทน router.push — บังคับ full page reload
+      // เพื่อให้ session cookie ถูกส่งไปกับ request แรกที่เข้า dashboard
+      window.location.href = "/dashboard/application-hub";
     }
   }
 

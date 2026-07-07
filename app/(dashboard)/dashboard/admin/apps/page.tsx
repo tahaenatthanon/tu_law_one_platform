@@ -957,8 +957,22 @@ function CalendarManager({
    ═══════════════════════════════════════════════════════════════ */
 
 export default function AdminAppsPage() {
-  // ── Role check ──
+  // ── Hooks (must be called before any early return) ──
   const { data: session } = useSession();
+  const {
+    allApps,
+    allCalendarEvents,
+    addApp,
+    updateApp,
+    removeApp,
+    updateAppStatus,
+    updateSubAppStatus,
+    addCalendarEvent,
+    updateCalendarEvent,
+    removeCalendarEvent,
+  } = useAppHub();
+
+  // ── Role check ──
   const userRoles: string[] = (session?.user as Record<string, unknown>)?.roles as string[] ?? [];
   const isAdmin = userRoles.some((r) => ADMIN_ROLES.includes(r));
 
@@ -977,20 +991,6 @@ export default function AdminAppsPage() {
       </div>
     );
   }
-
-  // ── Shared state (auto-syncs with application-hub) ──
-  const {
-    allApps,
-    allCalendarEvents,
-    addApp,
-    updateApp,
-    removeApp,
-    updateAppStatus,
-    updateSubAppStatus,
-    addCalendarEvent,
-    updateCalendarEvent,
-    removeCalendarEvent,
-  } = useAppHub();
 
   return (
     <div className="p-8">
