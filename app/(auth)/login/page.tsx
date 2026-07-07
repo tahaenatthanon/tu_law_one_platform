@@ -10,15 +10,16 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isMsLoading, setIsMsLoading] = useState(false);
 
-  // จับ error จาก NextAuth callback (เช่น Google OAuth error)
+  // จับ error จาก NextAuth callback (เช่น Google OAuth error, credentials error)
   useEffect(() => {
     const authError = searchParams.get("error");
     if (authError) {
       if (authError === "OAuthSignin" || authError === "OAuthCallback") {
         setError("การเข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาลองอีกครั้ง");
+      } else if (authError === "CredentialsSignin") {
+        setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองอีกครั้ง");
       } else if (authError === "AccessDenied") {
         setError("บัญชีของคุณไม่มีสิทธิ์เข้าถึงระบบ กรุณาติดต่อผู้ดูแล");
       } else {
@@ -30,23 +31,14 @@ function LoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
+    const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard/application-hub";
 
-    const result = await signIn("credentials", {
+    // ใช้ redirect ของ NextAuth โดยตรง — จัดการ cookie + redirect ในครั้งเดียว
+    await signIn("credentials", {
       email,
       password,
-      redirect: false,
+      callbackUrl,
     });
-
-    setIsLoading(false);
-
-    if (result?.error) {
-      setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองอีกครั้ง");
-    } else if (result?.ok) {
-      // ใช้ window.location แทน router.push — บังคับ full page reload
-      // เพื่อให้ session cookie ถูกส่งไปกับ request แรกที่เข้า dashboard
-      window.location.href = "/dashboard/application-hub";
-    }
   }
 
   async function handleGoogleSignIn() {
@@ -187,31 +179,16 @@ function LoginForm() {
 
               <button
                 type="submit"
-                disabled={isLoading}
                 className="w-full py-2.5 px-4 text-sm font-semibold text-[#1A1A2E]
                            bg-[#FDB813] hover:bg-[#E5A800]
                            focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 focus:ring-offset-2
-                           disabled:opacity-50 disabled:cursor-not-allowed
                            transition-colors duration-150
                            flex items-center justify-center gap-2"
               >
-                {isLoading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    กำลังเข้าสู่ระบบ...
-                  </>
-                ) : (
-                  <>
-                    เข้าสู่ระบบ
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </>
-                )}
-              </button>
+                  เข้าสู่ระบบ
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
             </form>
 
             <div className="relative my-5">
