@@ -1,12 +1,9 @@
 import { PrismaClient, UserStatus } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString: "postgresql://natthanon:ktnbs007@192.168.1.50/tulaw?schema=public",
-  }),
-});
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🌱 Seeding database...");

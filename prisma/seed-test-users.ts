@@ -1,12 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({
-    connectionString: "postgresql://natthanon:ktnbs007@192.168.1.50/tulaw?schema=public",
-  }),
-});
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 const testUsers = [
   { email: "admin@tulaw.ac.th", password: "TuLaw@2026!", firstName: "ผู้ดูแล", lastName: "ระบบ", roleCode: "super_admin" },

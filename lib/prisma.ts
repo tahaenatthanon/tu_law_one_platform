@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -14,21 +13,12 @@ function createPrismaClient(): PrismaClient {
     return new PrismaClient();
   }
 
-  // Use pg Pool with explicit timeout so failed connections fail fast
-  // instead of hanging the entire request (default: no timeout = hang forever)
-  const pool = new Pool({
-    connectionString: dbUrl,
-    connectionTimeoutMillis: 5000,  // 5 วินาที — ถ้าต่อไม่ได้ให้ throw ทันที
-    max: 5,
-  });
-
-  pool.on("error", (err) => {
-    console.error("[Prisma] Unexpected pool error:", err.message);
-  });
+  // Use Neon WebSocket adapter — supports transactions (needed for audit log & Google sign-in)
+  const adapter = new PrismaNeon({ connectionString: dbUrl });
 
   return new PrismaClient({
-    adapter: new PrismaPg(pool),
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    adapter,
+    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
 }
 
