@@ -34,6 +34,22 @@ export async function requireAuth() {
   return user;
 }
 
+/**
+ * requireRole — ตรวจสอบว่าผู้ใช้มี role อย่างน้อยหนึ่งใน roles ที่ระบุ
+ * ใช้ใน API Route: const user = await requireRole(["super_admin", "system_admin"]);
+ */
+export async function requireRole(allowedRoles: string[]) {
+  const user = await requireAuth();
+  const hasRole = user.roles.some((r) => allowedRoles.includes(r));
+  if (!hasRole) {
+    throw NextResponse.json(
+      { success: false, error: { code: "FORBIDDEN", message: "คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้" } },
+      { status: 403 }
+    );
+  }
+  return user;
+}
+
 export function parsePagination(req: NextRequest) {
   const url = new URL(req.url);
   const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1"));

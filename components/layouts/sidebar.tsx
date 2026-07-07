@@ -11,6 +11,8 @@ type MenuItem = {
   label: string;
   href: string;
   adminOnly?: boolean;
+  /** ถ้ามี — ต้องมีอย่างน้อย 1 role ในนี้ถึงจะเห็นเมนู (viewer ทุกเมนู, ที่เหลือจำกัด) */
+  requiredRoles?: string[];
 };
 
 const ADMIN_ROLES = ["super_admin", "system_admin"];
@@ -44,12 +46,14 @@ const menuItems: MenuItem[] = [
     section: "ข้อมูลเอกสาร & ประกาศ",
     label: "ข้อมูลเอกสาร & ประกาศ",
     href: "/dashboard/documents",
+    requiredRoles: ["super_admin", "system_admin", "dean", "dept_admin", "user"],
   },
   {
     icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
     section: "ข้อมูลบุคลากร",
     label: "บุคลากร",
     href: "/dashboard/users",
+    requiredRoles: ["super_admin", "system_admin", "dean", "dept_admin", "user"],
   },
   // ─── Admin Menu ───
   {
@@ -78,7 +82,13 @@ export default function Sidebar() {
     : "ยังไม่มีบทบาท";
 
   // Filter menu items based on role
-  const visibleItems = menuItems.filter((item) => !item.adminOnly || isAdmin);
+  const visibleItems = menuItems.filter((item) => {
+    // Admin-only check
+    if (item.adminOnly && !isAdmin) return false;
+    // Role requirement check
+    if (item.requiredRoles && !userRoles.some((r) => item.requiredRoles!.includes(r))) return false;
+    return true;
+  });
 
   async function handleLogout() {
     setIsLoggingOut(true);

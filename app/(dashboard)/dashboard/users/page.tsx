@@ -1,8 +1,14 @@
+"use client";
+
+import RequireRole from "@/components/shared/require-role";
+
 export default function UsersPage() {
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-[#1A1A2E]">บุคลากร</h1>
-      <p className="text-sm text-[#6B7280] mt-1">ข้อมูลบุคลากรคณะนิติศาสตร์</p>
-    </div>
+    <RequireRole roles={["super_admin", "system_admin", "dean", "dept_admin", "user"]}>
+      <div className="p-8">
+        <h1 className="text-2xl font-bold text-[#1A1A2E]">บุคลากร</h1>
+        <p className="text-sm text-[#6B7280] mt-1">ข้อมูลบุคลากรคณะนิติศาสตร์</p>
+      </div>
+    </RequireRole>
   );
 }

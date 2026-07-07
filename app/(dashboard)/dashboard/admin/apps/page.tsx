@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   appCategories,
   type Application,
@@ -9,6 +10,8 @@ import {
   type CalendarEvent,
 } from "@/lib/app-data";
 import { useAppHub } from "@/lib/app-hub-context";
+
+const ADMIN_ROLES = ["super_admin", "system_admin"];
 
 /* ═══════════════════════════════════════════════════════════════
    Helpers (shared)
@@ -954,6 +957,27 @@ function CalendarManager({
    ═══════════════════════════════════════════════════════════════ */
 
 export default function AdminAppsPage() {
+  // ── Role check ──
+  const { data: session } = useSession();
+  const userRoles: string[] = (session?.user as Record<string, unknown>)?.roles as string[] ?? [];
+  const isAdmin = userRoles.some((r) => ADMIN_ROLES.includes(r));
+
+  if (!isAdmin) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-[#FCE4E8] rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-[#A31D1D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m9-4a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-[#1A1A2E] mb-1">ไม่มีสิทธิ์เข้าถึง</h2>
+          <p className="text-sm text-[#6B7280]">คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณาติดต่อผู้ดูแลระบบ</p>
+        </div>
+      </div>
+    );
+  }
+
   // ── Shared state (auto-syncs with application-hub) ──
   const {
     allApps,
