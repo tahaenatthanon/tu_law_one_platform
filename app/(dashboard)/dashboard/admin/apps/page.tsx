@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import {
   appCategories,
   type Application,
@@ -187,6 +187,7 @@ function LocationSelect({ value, onChange }: { value: string; onChange: (v: stri
               value={customText}
               onChange={(e) => setCustomText(e.target.value)}
               placeholder="ระบุสถานที่เอง..."
+              autoComplete="off"
               className="w-full px-2 py-1.5 text-xs border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813]"
               onMouseDown={(e) => e.stopPropagation()}
             />
@@ -363,16 +364,19 @@ function AdminPanel({
                   <div>
                     <label className="block text-xs font-medium text-[#1A1A2E] mb-1">ชื่อแอปพลิเคชัน *</label>
                     <input type="text" value={editModal.name} onChange={(e) => updateField("name", e.target.value)}
+                      autoComplete="off"
                       className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" placeholder="ระบบทะเบียนนักศึกษา" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[#1A1A2E] mb-1">URL *</label>
-                    <input type="text" value={editModal.url} onChange={(e) => updateField("url", e.target.value)}
+                    <input type="url" value={editModal.url} onChange={(e) => updateField("url", e.target.value)}
+                      autoComplete="url"
                       className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" placeholder="https://..." />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[#1A1A2E] mb-1">คำอธิบาย</label>
                     <input type="text" value={editModal.description} onChange={(e) => updateField("description", e.target.value)}
+                      autoComplete="off"
                       className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" placeholder="คำอธิบายสั้นๆ" />
                   </div>
                   <div className={`grid ${editModal.editingId ? "grid-cols-1" : "grid-cols-2"} gap-3`}>
@@ -428,7 +432,7 @@ function AdminPanel({
                               type="button"
                               onClick={() => setExpandedApps((prev) => {
                                 const next = new Set(prev);
-                                next.has(app.id) ? next.delete(app.id) : next.add(app.id);
+                                if (next.has(app.id)) { next.delete(app.id); } else { next.add(app.id); }
                                 return next;
                               })}
                               className="shrink-0 w-5 h-5 flex items-center justify-center text-[#6B7280] hover:text-[#1A1A2E] cursor-pointer transition-colors"
@@ -644,17 +648,6 @@ function CalendarManager({
   const [editingBuiltInKey, setEditingBuiltInKey] = useState<string | null>(null);
   const [editingBuiltInName, setEditingBuiltInName] = useState("");
 
-  const catColors = [
-    { id: "purple", hex: "#a855f7", label: "ม่วง" },
-    { id: "blue", hex: "#3b82f6", label: "ฟ้า" },
-    { id: "orange", hex: "#f97316", label: "ส้ม" },
-    { id: "red", hex: "#ef4444", label: "แดง" },
-    { id: "pink", hex: "#ec4899", label: "ชมพู" },
-    { id: "green", hex: "#22c55e", label: "เขียว" },
-    { id: "teal", hex: "#14b8a6", label: "ทีล" },
-    { id: "indigo", hex: "#6366f1", label: "คราม" },
-  ];
-
   const handleBuiltInColor = (key: string, hex: string) => {
     updateCategoryColor(key, hex);
   };
@@ -793,6 +786,7 @@ function CalendarManager({
               {/* Add new */}
               <div className="flex items-center gap-2 mb-4 p-3 bg-gray-50 border border-[#D1D5DB]">
                 <input type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="ชื่อประเภทใหม่..."
+                  autoComplete="off"
                   className="flex-1 px-2 py-1.5 text-xs border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813]" />
                 <input type="color" value={newCatColor} onChange={(e) => setNewCatColor(e.target.value)}
                   className="w-8 h-8 rounded-full cursor-pointer border border-[#D1D5DB] p-0 shadow-sm hover:shadow [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0"
@@ -805,7 +799,7 @@ function CalendarManager({
 
               {/* Built-in categories */}
               <p className="text-[10px] font-semibold text-[#6B7280] uppercase mb-1.5">ค่าเริ่มต้น (เปลี่ยนชื่อ/สีได้)</p>
-              {Object.entries(eventCategoryMap).map(([key, cat]) => {
+              {Object.entries(eventCategoryMap).map(([key]) => {
                 const eff = allCategories[key];
                 const isOverridden = !!(categoryColorOverrides[key] || categoryNameOverrides[key]);
                 const currentHex = eff.hex;
@@ -815,6 +809,7 @@ function CalendarManager({
                     {isEditing ? (
                       <div className="flex items-center gap-2 p-2">
                         <input type="text" value={editingBuiltInName} onChange={(e) => setEditingBuiltInName(e.target.value)}
+                          autoComplete="off"
                           className="flex-1 px-2 py-1 text-xs border border-[#FDB813] focus:outline-none" />
                         <input type="color" value={currentHex} onChange={(e) => handleBuiltInColor(key, e.target.value)}
                           className="w-6 h-6 rounded-full cursor-pointer border border-[#D1D5DB] p-0 shadow-sm hover:shadow [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0" />
@@ -857,6 +852,7 @@ function CalendarManager({
                   {editingCatKey === cat.key ? (
                     <div className="flex items-center gap-2">
                       <input type="text" value={editingCatName} onChange={(e) => setEditingCatName(e.target.value)}
+                        autoComplete="off"
                         className="flex-1 px-2 py-1 text-xs border border-[#FDB813] focus:outline-none" />
                       <input type="color" value={currentHex} onChange={(e) => handleCustomColor(cat.key, e.target.value)}
                         className="w-6 h-6 rounded-full cursor-pointer border border-[#D1D5DB] p-0 shadow-sm hover:shadow [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0"
@@ -902,12 +898,12 @@ function CalendarManager({
             <div className="p-6">
               <h4 className="text-sm font-semibold text-[#1A1A2E] mb-4">{editModal.editingId ? "✏️ แก้ไขกิจกรรม" : "➕ เพิ่มกิจกรรมใหม่"}</h4>
               <div className="space-y-3">
-                <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">ชื่อกิจกรรม *</label><input type="text" value={editModal.title} onChange={(e) => updateField("title", e.target.value)} className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" placeholder="นัดประชุม..." /></div>
+                <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">ชื่อกิจกรรม *</label><input type="text" value={editModal.title} onChange={(e) => updateField("title", e.target.value)} autoComplete="off" className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" placeholder="นัดประชุม..." /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">วันที่เริ่ม *</label><input type="date" value={editModal.date} onChange={(e) => updateField("date", e.target.value)} className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" /></div>
-                  <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">วันที่สิ้นสุด</label><input type="date" value={editModal.endDate} onChange={(e) => updateField("endDate", e.target.value)} className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" /></div>
-                  <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">เวลาเริ่ม</label><input type="time" value={editModal.time} onChange={(e) => updateField("time", e.target.value)} className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" /></div>
-                  <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">เวลาสิ้นสุด</label><input type="time" value={editModal.endTime} onChange={(e) => updateField("endTime", e.target.value)} className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" /></div>
+                  <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">วันที่เริ่ม *</label><input type="date" value={editModal.date} onChange={(e) => updateField("date", e.target.value)} autoComplete="off" className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" /></div>
+                  <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">วันที่สิ้นสุด</label><input type="date" value={editModal.endDate} onChange={(e) => updateField("endDate", e.target.value)} autoComplete="off" className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" /></div>
+                  <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">เวลาเริ่ม</label><input type="time" value={editModal.time} onChange={(e) => updateField("time", e.target.value)} autoComplete="off" className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" /></div>
+                  <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">เวลาสิ้นสุด</label><input type="time" value={editModal.endTime} onChange={(e) => updateField("endTime", e.target.value)} autoComplete="off" className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><label className="block text-xs font-medium text-[#1A1A2E] mb-1">สถานที่</label>
@@ -962,7 +958,6 @@ export default function AdminAppsPage() {
   const {
     allApps,
     allCalendarEvents,
-    allCategories,
     addApp,
     updateApp,
     removeApp,
@@ -971,12 +966,6 @@ export default function AdminAppsPage() {
     addCalendarEvent,
     updateCalendarEvent,
     removeCalendarEvent,
-    updateCategoryColor,
-    updateCategoryName,
-    resetCategoryOverrides,
-    addCustomCategory,
-    removeCustomCategory,
-    updateCustomCategoryColor,
   } = useAppHub();
 
   return (
