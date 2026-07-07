@@ -315,5 +315,5 @@ export const authOptions: NextAuthOptions = {
     error: "/login",
   },
 
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "tulaw-one-platform-fallback-secret-do-not-use-in-real-prod",
 };
