@@ -52,7 +52,10 @@ function LoginForm() {
   async function handleGoogleSignIn() {
     setError("");
     setIsMsLoading(true);
-    await signIn("google", { callbackUrl: "/dashboard/application-hub" });
+    await signIn("google", { 
+      callbackUrl: "/dashboard/application-hub",
+      prompt: "select_account",
+    });
   }
 
   return (
