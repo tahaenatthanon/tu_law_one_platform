@@ -5,6 +5,7 @@ import {
   appCategories,
   type Application,
   type AppStatus,
+  type SubApp,
   type CalendarEvent,
 } from "@/lib/app-data";
 import { useAppHub } from "@/lib/app-hub-context";
@@ -224,17 +225,19 @@ function LocationSelect({ value, onChange }: { value: string; onChange: (v: stri
    ═══════════════════════════════════════════════════════════════ */
 
 function AdminPanel({
-  appList, onAdd, onUpdate, onRemove, onUpdateAppStatus,
+  appList, onAdd, onUpdate, onRemove, onUpdateAppStatus, onUpdateSubAppStatus,
 }: {
   appList: Application[];
   onAdd: (app: Application) => void;
   onUpdate: (id: string, updates: Partial<Application>) => void;
   onRemove: (id: string) => void;
   onUpdateAppStatus: (id: string, status: AppStatus) => void;
+  onUpdateSubAppStatus: (appId: string, subId: string, status: AppStatus) => void;
 }) {
   const [showStatusPanel, setShowStatusPanel] = useState(false);
   const [showEditInfoPanel, setShowEditInfoPanel] = useState(false);
   const [deleteAppTarget, setDeleteAppTarget] = useState<Application | null>(null);
+  const [expandedApps, setExpandedApps] = useState<Set<string>>(new Set());
 
   const [editModal, setEditModal] = useState<{
     editingId: string | null;
@@ -244,17 +247,38 @@ function AdminPanel({
 
   const [pendingStatusChanges, setPendingStatusChanges] = useState<Map<string, AppStatus>>(new Map());
 
-  const getEffectiveStatus = (app: Application) =>
-    pendingStatusChanges.get(`app:${app.id}`) ?? app.status;
+  const getEffectiveStatus = (id: string, fallback: AppStatus) =>
+    pendingStatusChanges.get(id) ?? fallback;
 
-  const setPendingApp = (id: string, status: AppStatus) =>
-    setPendingStatusChanges((prev) => new Map(prev).set(`app:${id}`, status));
+  const setPendingStatus = (id: string, status: AppStatus) =>
+    setPendingStatusChanges((prev) => {
+      const next = new Map(prev);
+      // ถ้าเปลี่ยนกลับไปเป็นค่าเดิม → ลบออกจาก pending (ไม่มีการเปลี่ยนแปลง)
+      const entry = id.startsWith("sub:")
+        ? appList.flatMap((a) => a.subApps).find((s) => `sub:${s.id}` === id)
+        : appList.find((a) => a.id === id);
+      const originalStatus = entry ? (id.startsWith("sub:") ? (entry as SubApp).status : (entry as Application).status) : undefined;
+      if (originalStatus === status) {
+        next.delete(id);
+      } else {
+        next.set(id, status);
+      }
+      return next;
+    });
 
   const applyPendingStatusChanges = () => {
     pendingStatusChanges.forEach((status, key) => {
-      if (key.startsWith("app:")) {
-        const appId = key.slice(4);
-        onUpdateAppStatus(appId, status);
+      if (key.startsWith("sub:")) {
+        const subId = key.slice(4);
+        for (const app of appList) {
+          const sub = app.subApps.find((s) => s.id === subId);
+          if (sub) {
+            onUpdateSubAppStatus(app.id, subId, status);
+            break;
+          }
+        }
+      } else {
+        onUpdateAppStatus(key, status);
       }
     });
     setPendingStatusChanges(new Map());
@@ -369,7 +393,7 @@ function AdminPanel({
                 </div>
               <div className="flex gap-2 justify-end mt-4">
                 <button onClick={closeEditModal} className="px-4 py-2 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">ยกเลิก</button>
-                <button onClick={handleSubmit} disabled={!editModal.name || !editModal.url} className="px-5 py-2 text-sm font-semibold bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 focus:ring-offset-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed">{editModal.editingId ? "บันทึกการแก้ไข" : "บันทึก"}</button>
+                <button onClick={handleSubmit} disabled={!editModal.name || !editModal.url} className="px-5 py-2 text-sm font-semibold bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 focus:ring-offset-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed">บันทึก</button>
                 </div>
               </div>
             </div>
@@ -379,36 +403,83 @@ function AdminPanel({
         {/* Status Panel Modal */}
         {showStatusPanel && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowStatusPanel(false)}>
-            <div className="bg-white border border-[#FDB813] shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white border border-[#FDB813] shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between p-5 pb-3 border-b border-[#D1D5DB] shrink-0">
                 <div>
                   <h3 className="text-sm font-semibold text-[#1A1A2E]">เปลี่ยนสถานะแอปพลิเคชัน</h3>
-                  <p className="text-[10px] text-[#9CA3AF] mt-0.5">เลือกสถานะจาก dropdown แล้วกดบันทึก</p>
+                  <p className="text-[10px] text-[#9CA3AF] mt-0.5">เลือกสถานะจาก dropdown — คลิก ▶ เพื่อดูรายการย่อย — กดบันทึกเพื่อยืนยัน</p>
                 </div>
               </div>
-              <div className="p-5 overflow-y-auto flex-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {appList.map((app) => {
-                    const pendingStatus = getEffectiveStatus(app);
-                    const origStatus = app.status;
-                    const appChanged = pendingStatusChanges.has(`app:${app.id}`);
-                    return (
-                      <div key={app.id} className={`text-xs border transition-colors p-2 flex items-center justify-between gap-2 ${appChanged ? "border-[#FDB813] bg-[#FDB813]/5" : "border-[#D1D5DB] bg-gray-50"}`}>
-                        <div className="min-w-0 flex-1">
-                          <span className="truncate font-medium text-[#1A1A2E] block">{app.name}</span>
-                          <span className="text-[9px]">
-                            <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusMap[origStatus].dot}`} /> {statusMap[origStatus].label}
-                            {appChanged && <span className="ml-1 text-[#FDB813] font-medium">→ {statusMap[pendingStatus].label}</span>}
-                          </span>
+              <div className="p-5 overflow-y-auto flex-1 space-y-2">
+                {appList.map((app) => {
+                  const pendingStatus = getEffectiveStatus(app.id, app.status);
+                  const origStatus = app.status;
+                  const appChanged = pendingStatusChanges.has(app.id);
+                  const expanded = expandedApps.has(app.id);
+                  const hasSubApps = app.subApps && app.subApps.length > 0;
+                  return (
+                    <div key={app.id} className={`border transition-colors ${appChanged ? "border-[#FDB813] bg-[#FDB813]/5" : "border-[#D1D5DB] bg-white"}`}>
+                      {/* Parent App Row */}
+                      <div className="flex items-center justify-between gap-2 p-3">
+                        {/* Expand toggle */}
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          {hasSubApps ? (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedApps((prev) => {
+                                const next = new Set(prev);
+                                next.has(app.id) ? next.delete(app.id) : next.add(app.id);
+                                return next;
+                              })}
+                              className="shrink-0 w-5 h-5 flex items-center justify-center text-[#6B7280] hover:text-[#1A1A2E] cursor-pointer transition-colors"
+                            >
+                              <svg className={`w-3 h-3 transition-transform ${expanded ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
+                          ) : (
+                            <span className="w-5 shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                            <span className="text-sm font-semibold text-[#1A1A2E] block truncate">{app.name}</span>
+                            <span className="text-[10px] text-[#6B7280]">
+                              <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusMap[origStatus].dot}`} /> {statusMap[origStatus].label}
+                              {appChanged && <span className="ml-1 text-[#FDB813] font-medium">→ {statusMap[pendingStatus].label}</span>}
+                            </span>
+                          </div>
                         </div>
-                        <StatusSelect value={pendingStatus} onChange={(v) => setPendingApp(app.id, v)} />
+                        <StatusSelect value={pendingStatus} onChange={(v) => setPendingStatus(app.id, v)} />
                       </div>
-                    );
-                  })}
-                </div>
+
+                      {/* Sub Apps (expandable) */}
+                      {hasSubApps && expanded && (
+                        <div className="border-t border-[#D1D5DB] bg-gray-50/50">
+                          {app.subApps.map((sub) => {
+                            const subId = `sub:${sub.id}`;
+                            const subPendingStatus = getEffectiveStatus(subId, sub.status);
+                            const subOrigStatus = sub.status;
+                            const subChanged = pendingStatusChanges.has(subId);
+                            return (
+                              <div key={sub.id} className={`flex items-center justify-between gap-2 px-4 py-2 border-b border-[#D1D5DB]/50 last:border-b-0 transition-colors ${subChanged ? "bg-[#FDB813]/5" : ""}`}>
+                                <div className="min-w-0 flex-1 pl-1">
+                                  <span className="text-xs font-medium text-[#1A1A2E] block truncate">{sub.name}</span>
+                                  <span className="text-[9px] text-[#6B7280]">
+                                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusMap[subOrigStatus].dot}`} /> {statusMap[subOrigStatus].label}
+                                    {subChanged && <span className="ml-1 text-[#FDB813] font-medium">→ {statusMap[subPendingStatus].label}</span>}
+                                  </span>
+                                </div>
+                                <StatusSelect value={subPendingStatus} onChange={(v) => setPendingStatus(subId, v)} size="xs" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <div className="flex justify-end gap-2 p-5 pt-3 border-t border-[#D1D5DB] shrink-0">
-                <button onClick={() => setShowStatusPanel(false)} className="px-5 py-2.5 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">ปิด</button>
+                <button onClick={() => { setShowStatusPanel(false); setPendingStatusChanges(new Map()); }} className="px-5 py-2.5 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">ปิด</button>
                 <button onClick={applyPendingStatusChanges} disabled={pendingStatusChanges.size === 0} className="px-5 py-2.5 text-sm font-semibold bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 focus:ring-offset-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed">บันทึก</button>
               </div>
             </div>
@@ -848,7 +919,7 @@ function CalendarManager({
               </div>
               <div className="flex gap-2 justify-end mt-4">
                 <button onClick={closeEditModal} className="px-4 py-2 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">ยกเลิก</button>
-                <button onClick={handleSubmit} disabled={!editModal.title || !editModal.date} className="px-5 py-2 text-sm font-semibold bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 focus:ring-offset-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed">{editModal.editingId ? "บันทึกการแก้ไข" : "บันทึก"}</button>
+                <button onClick={handleSubmit} disabled={!editModal.title || !editModal.date} className="px-5 py-2 text-sm font-semibold bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 focus:ring-offset-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed">บันทึก</button>
               </div>
             </div>
           </div>
@@ -896,6 +967,7 @@ export default function AdminAppsPage() {
     updateApp,
     removeApp,
     updateAppStatus,
+    updateSubAppStatus,
     addCalendarEvent,
     updateCalendarEvent,
     removeCalendarEvent,
@@ -921,6 +993,7 @@ export default function AdminAppsPage() {
         onUpdate={updateApp}
         onRemove={removeApp}
         onUpdateAppStatus={updateAppStatus}
+        onUpdateSubAppStatus={updateSubAppStatus}
       />
       <CalendarManager
         events={allCalendarEvents}

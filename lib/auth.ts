@@ -6,12 +6,21 @@ import { prisma } from "./prisma";
 import { authenticateAdUser } from "./ldap";
 import { createAuditLog } from "./audit";
 
-/** ห่อ Promise ด้วย timeout — ใช้กับ LDAP ที่อาจค้าง */
+/** ห่อ Promise ด้วย timeout — ใช้กับ LDAP หรือ DB query ที่อาจค้าง */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([
     promise,
     new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
   ]);
+}
+
+/** ถาม DB แบบปลอดภัย — ใช้ timeout + try/catch ป้องกัน connection hang */
+async function safeDbCall<T>(fn: () => Promise<T>, timeoutMs = 4000): Promise<T | null> {
+  try {
+    return await withTimeout(fn(), timeoutMs);
+  } catch {
+    return null;
+  }
 }
 
 export const authOptions: NextAuthOptions = {
@@ -41,17 +50,22 @@ export const authOptions: NextAuthOptions = {
         const userAgent: string | undefined =
           typeof rawUserAgent === "string" ? rawUserAgent : undefined;
 
-        try {
-          // ─── Step 1: ลอง authenticate ผ่าน Active Directory (ถ้าเปิดใช้) ───
-          const ldapEnabled = process.env.LDAP_ENABLED === "true";
-          let adUser: Awaited<ReturnType<typeof authenticateAdUser>> = null;
+        // ── Hard timeout — ถ้า DB/AD ไม่ตอบ 10 วิ → return null แทน hang ──
+        const result = await withTimeout(
+          (async () => {
+            try {
+              console.log("[Auth] authorize called for:", credentials.email);
+              
+              // ─── Step 1: ลอง authenticate ผ่าน Active Directory (ถ้าเปิดใช้) ───
+              const ldapEnabled = process.env.LDAP_ENABLED === "true";
+              let adUser: Awaited<ReturnType<typeof authenticateAdUser>> = null;
 
-          if (ldapEnabled) {
-            adUser = await withTimeout(
-              authenticateAdUser(credentials.email, credentials.password),
-              5000 // timeout 5 วิ
-            );
-          }
+              if (ldapEnabled) {
+                adUser = await withTimeout(
+                  authenticateAdUser(credentials.email, credentials.password),
+                  5000
+                );
+              }
 
           if (adUser) {
             // หา user ใน DB (ต้องมีอยู่แล้วจาก AD Sync)
@@ -84,7 +98,7 @@ export const authOptions: NextAuthOptions = {
               });
             }
 
-            const roleNames = user.userRoles.map((ur) => ur.role.roleCode);
+            const roleNames = user.userRoles.map((ur: { role: { roleCode: string } }) => ur.role.roleCode);
 
             await createAuditLog({
               userId: user.id,
@@ -106,6 +120,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           // ─── Step 2: Fallback — authenticate ผ่าน Database ───
+          console.log("[Auth] Fallback to DB for:", credentials.email);
           const dbUser = await prisma.user.findUnique({
             where: { email: credentials.email },
             include: {
@@ -115,6 +130,7 @@ export const authOptions: NextAuthOptions = {
               },
             },
           });
+          console.log("[Auth] DB query result:", dbUser ? `found (status=${dbUser.status}, hasPass=${!!dbUser.passwordHash})` : "NOT FOUND");
 
           if (!dbUser || !dbUser.passwordHash) {
             await createAuditLog({
@@ -157,7 +173,7 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
-          const dbRoleNames = dbUser.userRoles.map((ur) => ur.role.roleCode);
+          const dbRoleNames = dbUser.userRoles.map((ur: { role: { roleCode: string } }) => ur.role.roleCode);
 
           await createAuditLog({
             userId: dbUser.id,
@@ -177,10 +193,19 @@ export const authOptions: NextAuthOptions = {
             status: dbUser.status,
           };
         } catch (error) {
-          console.error("[Auth] Error:", error);
+          console.error("[Auth] authorize error:", error);
           return null;
         }
-      },
+      })(),
+      10000 // hard timeout 10 วิ — ถ้า DB/AD ไม่ตอบ → return null
+    );
+
+    if (result === null) {
+      console.warn("[Auth] Login timeout or error for:", credentials.email);
+    }
+
+    return result ?? null;
+  },
     }),
   ],
 
@@ -229,7 +254,7 @@ export const authOptions: NextAuthOptions = {
             });
           }
 
-          const roleNames = dbUser.userRoles.map((ur) => ur.role.roleCode);
+          const roleNames = dbUser.userRoles.map((ur: { role: { roleCode: string } }) => ur.role.roleCode);
 
           await createAuditLog({
             userId: dbUser.id,

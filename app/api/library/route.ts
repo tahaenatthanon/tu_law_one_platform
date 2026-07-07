@@ -1,9 +1,19 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAuth, success, error, parsePagination } from "@/lib/api-utils";
 
+// TODO: Replace with prisma.libraryResource/Borrowing/Reservation when models are added
+
+const mockResources = [
+  { id: 1, title: "ประมวลกฎหมายแพ่งและพาณิชย์ ฉบับสมบูรณ์", author: "สำนักพิมพ์ธรรมศาสตร์", resourceType: "book", category: "กฎหมาย", barcode: "BK-001", availableCopies: 5, totalCopies: 5, isActive: true },
+  { id: 2, title: "กฎหมายรัฐธรรมนูญและสถาบันการเมือง", author: "รศ.ดร.สมชาย ใจดี", resourceType: "book", category: "กฎหมาย", barcode: "BK-002", availableCopies: 3, totalCopies: 5, isActive: true },
+  { id: 3, title: "วารสารนิติศาสตร์ ปีที่ 50", author: "คณะนิติศาสตร์ มธ.", resourceType: "journal", category: "วารสาร", barcode: "JN-001", availableCopies: 2, totalCopies: 2, isActive: true },
+];
+
+const mockBorrowings: unknown[] = [];
+const mockReservations: unknown[] = [];
+
 export async function GET(req: NextRequest) {
-  await requireAuth().catch((e) => { throw e; });
+  await requireAuth();
   try {
     const { page, limit, skip } = parsePagination(req);
     const url = new URL(req.url);
@@ -11,15 +21,13 @@ export async function GET(req: NextRequest) {
     const type = url.searchParams.get("type");
     const category = url.searchParams.get("category");
 
-    const where: Record<string, unknown> = { isActive: true };
-    if (q) where.OR = [{ title: { contains: q, mode: "insensitive" } }, { author: { contains: q, mode: "insensitive" } }, { barcode: { contains: q, mode: "insensitive" } }];
-    if (type) where.resourceType = type;
-    if (category) where.category = category;
+    let data = mockResources.filter((r) => r.isActive);
+    if (q) { const lq = q.toLowerCase(); data = data.filter((r) => r.title.toLowerCase().includes(lq) || r.author.toLowerCase().includes(lq) || r.barcode.includes(q)); }
+    if (type) data = data.filter((r) => r.resourceType === type);
+    if (category) data = data.filter((r) => r.category === category);
 
-    const [data, total] = await Promise.all([
-      prisma.libraryResource.findMany({ where, skip, take: limit, orderBy: { title: "asc" } }),
-      prisma.libraryResource.count({ where }),
-    ]);
+    const total = data.length;
+    data = data.slice(skip, skip + limit);
     return success(data, { total, page, limit });
   } catch (e) {
     return error("INTERNAL", "ไม่สามารถสืบค้นทรัพยากรได้");
@@ -27,7 +35,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const user = await requireAuth().catch((e) => { throw e; });
+  const user = await requireAuth();
   try {
     const body = await req.json();
     const action = body.action;
@@ -35,37 +43,33 @@ export async function POST(req: NextRequest) {
     if (action === "borrow") {
       const { resourceId } = body;
       if (!resourceId) return error("VALIDATION", "กรุณาระบุทรัพยากร");
-      const resource = await prisma.libraryResource.findUnique({ where: { id: resourceId } });
+      const resource = mockResources.find((r) => r.id === resourceId);
       if (!resource || resource.availableCopies < 1) return error("UNAVAILABLE", "ทรัพยากรไม่พร้อมให้ยืม");
 
-      const [borrowing] = await prisma.$transaction([
-        prisma.libraryBorrowing.create({
-          data: { resourceId, userId: user.id, borrowDate: new Date(), dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), status: "borrowed", createdBy: user.id },
-        }),
-        prisma.libraryResource.update({ where: { id: resourceId }, data: { availableCopies: { decrement: 1 } } }),
-      ]);
+      resource.availableCopies -= 1;
+      const borrowing = { id: Date.now(), resourceId, userId: user.id, borrowDate: new Date().toISOString(), dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), status: "borrowed" };
+      mockBorrowings.push(borrowing);
       return success(borrowing);
     }
 
     if (action === "return") {
       const { borrowingId } = body;
       if (!borrowingId) return error("VALIDATION", "กรุณาระบุรหัสการยืม");
-      const borrowing = await prisma.libraryBorrowing.findUnique({ where: { id: borrowingId } });
-      if (!borrowing || borrowing.status === "returned") return error("INVALID", "รายการยืมไม่ถูกต้องหรือคืนแล้ว");
+      const idx = mockBorrowings.findIndex((b: any) => b.id === borrowingId);
+      if (idx === -1 || (mockBorrowings[idx] as any).status === "returned") return error("INVALID", "รายการยืมไม่ถูกต้องหรือคืนแล้ว");
 
-      const [updated] = await prisma.$transaction([
-        prisma.libraryBorrowing.update({ where: { id: borrowingId }, data: { status: "returned", returnDate: new Date(), updatedBy: user.id } }),
-        prisma.libraryResource.update({ where: { id: borrowing.resourceId }, data: { availableCopies: { increment: 1 } } }),
-      ]);
-      return success(updated);
+      (mockBorrowings[idx] as any).status = "returned";
+      (mockBorrowings[idx] as any).returnDate = new Date().toISOString();
+      const resource = mockResources.find((r) => r.id === (mockBorrowings[idx] as any).resourceId);
+      if (resource) resource.availableCopies += 1;
+      return success(mockBorrowings[idx]);
     }
 
     if (action === "reserve") {
       const { resourceId } = body;
       if (!resourceId) return error("VALIDATION", "กรุณาระบุทรัพยากร");
-      const reservation = await prisma.libraryReservation.create({
-        data: { resourceId, userId: user.id, reserveDate: new Date(), status: "pending", createdBy: user.id },
-      });
+      const reservation = { id: Date.now(), resourceId, userId: user.id, reserveDate: new Date().toISOString(), status: "pending" };
+      mockReservations.push(reservation);
       return success(reservation);
     }
 

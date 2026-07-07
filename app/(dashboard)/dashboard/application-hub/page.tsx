@@ -52,15 +52,23 @@ function AppIcon({ app, pinned, onTogglePin, onClick }: {
     erp: "bg-[#8B1515] hover:bg-[#A31D1D]", eoffice: "bg-[#8B1515] hover:bg-[#A31D1D]",
     storage: "bg-[#8B1515] hover:bg-[#A31D1D]", academic: "bg-[#8B1515] hover:bg-[#A31D1D]",
     hr: "bg-[#8B1515] hover:bg-[#A31D1D]",
+    projects: "bg-[#8B1515] hover:bg-[#A31D1D]",
+    bookmeeting: "bg-[#8B1515] hover:bg-[#A31D1D]",
   };
-  const iconBg = isFolder ? (domainColors[app.category] ?? "bg-[#8B1515] hover:bg-[#A31D1D]") : (isOffline ? "bg-gray-400 hover:bg-gray-500" : "bg-[#8B1515] hover:bg-[#A31D1D]");
+  const iconBg = isFolder
+    ? (domainColors[app.category] ?? "bg-[#8B1515] hover:bg-[#A31D1D]")
+    : isOffline
+      ? "bg-gray-300"
+      : "bg-[#8B1515] hover:bg-[#A31D1D]";
+  const cursorClass = isOffline ? "cursor-not-allowed opacity-60" : "cursor-pointer";
 
   return (
     <div className="relative group">
       {/* Icon */}
       <button
         onClick={() => onClick(app)}
-        className={`w-full aspect-square transition-colors flex flex-col items-center justify-center gap-1 shadow-sm hover:shadow-md relative ${iconBg}`}
+        disabled={isOffline}
+        className={`w-full aspect-square transition-colors flex flex-col items-center justify-center gap-1 shadow-sm hover:shadow-md relative ${iconBg} ${cursorClass}`}
       >
         <svg className={`w-8 h-8 ${isOffline ? "text-gray-200" : "text-[#FDB813]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={app.icon} />
@@ -152,7 +160,7 @@ function LoginGate({ app, onClose }: { app: Application; onClose: () => void }) 
         if (isFolder) {
           setAuthenticated(true);
         } else {
-          window.open(app.url, "_blank");
+          window.open(app.url, "_blank", "noopener,noreferrer");
           onClose();
         }
       } else {
@@ -181,15 +189,26 @@ function LoginGate({ app, onClose }: { app: Application; onClose: () => void }) 
         </div>
 
         {isOffline && (
-          <div className="bg-[#FCE4E8] border border-[#A31D1D] p-3 mb-4 text-xs text-[#A31D1D]">
-            <p className="font-semibold">⚠️ ระบบนี้ไม่สามารถเข้าใช้งานได้ในขณะนี้</p>
-            <p>ระบบอยู่ในสถานะออฟไลน์ — กรุณาติดต่อผู้ดูแลระบบ</p>
+          <div className="bg-[#FCE4E8] border-2 border-[#A31D1D] p-4 mb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <svg className="w-5 h-5 text-[#A31D1D] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm font-bold text-[#A31D1D]">⚠️ ระบบนี้ไม่สามารถเข้าใช้งานได้ในขณะนี้</p>
+            </div>
+            <p className="text-xs text-[#A31D1D]/80 ml-7">ระบบอยู่ในสถานะ <strong>ออฟไลน์</strong> — กรุณาติดต่อผู้ดูแลระบบ หรือลองอีกครั้งในภายหลัง</p>
           </div>
         )}
         {isMaintenance && (
-          <div className="bg-[#FFF8E1] border border-[#FDB813] p-3 mb-4 text-xs text-[#8B6914]">
-            <p className="font-semibold">🔧 ระบบนี้อยู่ในระหว่างการบำรุงรักษา</p>
-            <p>คุณยังสามารถเข้าใช้งานได้ แต่อาจพบปัญหาบางประการ</p>
+          <div className="bg-[#FFF8E1] border-2 border-[#FDB813] p-4 mb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <svg className="w-5 h-5 text-[#8B6914] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <p className="text-sm font-bold text-[#8B6914]">🔧 ระบบนี้อยู่ในระหว่างการบำรุงรักษา</p>
+            </div>
+            <p className="text-xs text-[#8B6914]/80 ml-7">คุณยังสามารถเข้าใช้งานได้ แต่อาจพบปัญหาหรือฟีเจอร์บางอย่างไม่พร้อมใช้งาน</p>
           </div>
         )}
 
@@ -197,18 +216,40 @@ function LoginGate({ app, onClose }: { app: Application; onClose: () => void }) 
         {isFolder && authenticated && app.subApps.length > 0 && (
           <div className="space-y-1.5 mb-4">
             {app.subApps.map((sub) => {
-              const ss = statusMap[sub.status];
+              const subOffline = sub.status === "offline";
+              const subMaintenance = sub.status === "maintenance";
               return (
-                <a key={sub.id} href={sub.url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-between p-2.5 border border-[#D1D5DB] hover:border-[#FDB813] hover:bg-[#FDB813]/5 transition-colors group">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#1A1A2E]">{sub.name}</p>
-                    <p className="text-[10px] text-[#6B7280] mt-0.5">{sub.description}</p>
+                <div
+                  key={sub.id}
+                  className={`flex items-center p-2.5 border transition-colors ${
+                    subOffline
+                      ? "border-gray-200 bg-gray-50 opacity-60"
+                      : subMaintenance
+                        ? "border-[#FDB813]/50 bg-[#FFF8E1] hover:border-[#FDB813] hover:bg-[#FFF4CC] cursor-pointer"
+                        : "border-[#D1D5DB] hover:border-[#FDB813] hover:bg-[#FDB813]/5 cursor-pointer"
+                  }`}
+                  onClick={() => {
+                    if (!subOffline) {
+                      window.open(sub.url, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                  role={subOffline ? undefined : "button"}
+                  tabIndex={subOffline ? undefined : 0}
+                  onKeyDown={(e) => {
+                    if (!subOffline && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      window.open(sub.url, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-medium ${subOffline ? "text-[#9CA3AF]" : "text-[#1A1A2E]"}`}>
+                      {sub.name}
+                      {subMaintenance && <span className="ml-1.5 text-[9px] px-1.5 py-0.5 bg-yellow-200 text-yellow-800 rounded-full font-medium">กำลังบำรุงรักษา</span>}
+                    </p>
+                    <p className={`text-[10px] mt-0.5 ${subOffline ? "text-[#C4C8CC]" : "text-[#6B7280]"}`}>{sub.description}</p>
                   </div>
-                  <span className={`text-[10px] flex items-center gap-1 shrink-0 ml-2 ${ss.text}`}>
-                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${ss.dot}`} />{ss.label}
-                  </span>
-                </a>
+                </div>
               );
             })}
           </div>
@@ -264,24 +305,27 @@ function LoginGate({ app, onClose }: { app: Application; onClose: () => void }) 
         )}
 
         <div className="flex gap-2">
-          <button onClick={onClose}
-            className="flex-1 px-4 py-2.5 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">
-            {isOffline ? "ปิด" : "ยกเลิก"}
-          </button>
-          {isOffline ? (
-            <div className="flex-1 px-4 py-2.5 text-sm font-semibold text-center bg-gray-200 text-gray-400 rounded select-none">
-              ไม่สามารถเข้าใช้งานได้
-            </div>
-          ) : isFolder && authenticated ? (
+          {isFolder && authenticated ? (
             <button onClick={onClose}
-              className="flex-1 px-4 py-2.5 text-sm font-semibold bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 focus:ring-offset-2 cursor-pointer transition-all">
+              className="w-full px-4 py-2.5 text-sm font-semibold bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 focus:ring-offset-2 cursor-pointer transition-all">
+              ปิด
+            </button>
+          ) : isOffline ? (
+            <button onClick={onClose}
+              className="w-full px-4 py-2.5 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">
               ปิด
             </button>
           ) : (
-            <button onClick={handleEnter} disabled={isLoading || !email || !password}
-              className={`flex-1 px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isMaintenance ? "bg-[#FDB813]/70 text-[#1A1A2E] hover:bg-[#E5A800] focus:ring-[#FDB813]/50" : "bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] focus:ring-[#FDB813]/50"}`}>
-              {isLoading ? "กำลังตรวจสอบ..." : isMaintenance ? "เข้าใช้งาน (อาจมีปัญหา)" : "เข้าใช้งาน"}
-            </button>
+            <>
+              <button onClick={onClose}
+                className="flex-1 px-4 py-2.5 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">
+                ปิด
+              </button>
+              <button onClick={handleEnter} disabled={isLoading || !email || !password}
+                className={`flex-1 px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isMaintenance ? "bg-[#FDB813]/70 text-[#1A1A2E] hover:bg-[#E5A800] focus:ring-[#FDB813]/50" : "bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] focus:ring-[#FDB813]/50"}`}>
+                {isLoading ? "กำลังตรวจสอบ..." : isMaintenance ? "เข้าใช้งาน (อาจมีปัญหา)" : "เข้าใช้งาน"}
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -677,13 +721,21 @@ export default function ApplicationHubPage() {
   // ── Shared state (auto-syncs with admin page) ──
   const { allApps, allCalendarEvents, pinnedIds, togglePin, allCategories } = useAppHub();
 
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [advancedFilters, setAdvancedFilters] = useState<{ keyword: string; dateFrom: string; dateTo: string; categories: string[] } | null>(null);
   const [loginGateApp, setLoginGateApp] = useState<Application | null>(null);
   const [activeUserCount, setActiveUserCount] = useState<number>(0);
   const [onlineUserCount, setOnlineUserCount] = useState<number>(0);
+  const [toast, setToast] = useState<{ message: string; type: "error" | "warning" | "info" } | null>(null);
+
+  // Auto-dismiss toast after 3 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   // Fetch real stats
   useEffect(() => {
@@ -698,14 +750,17 @@ export default function ApplicationHubPage() {
       .catch(() => {});
   }, []);
 
-  const handleOpenApp = (app: Application) => setLoginGateApp(app);
+  const handleOpenApp = (app: Application) => {
+    if (app.status === "offline") {
+      setToast({ message: `⚠️ "${app.name}" อยู่ในสถานะออฟไลน์ ไม่สามารถเข้าใช้งานได้ในขณะนี้`, type: "error" });
+      return;
+    }
+    setLoginGateApp(app);
+  };
 
   // Filter and separate pinned/unpinned
   const { pinnedApps, unpinnedApps } = useMemo(() => {
     let list = [...allApps].filter((a) => isAppAllowed(a, userRoles));
-
-    // Category
-    if (activeCategory) list = list.filter((a) => a.category === activeCategory);
 
     // Quick search
     if (searchText.trim()) {
@@ -730,7 +785,7 @@ export default function ApplicationHubPage() {
     const unpinned = list.filter((a) => !pinnedIds.has(a.id));
 
     return { pinnedApps: pinned, unpinnedApps: unpinned };
-  }, [allApps, activeCategory, searchText, advancedFilters, pinnedIds, userRoles]);
+  }, [allApps, searchText, advancedFilters, pinnedIds, userRoles]);
 
   const totalApps = pinnedApps.length + unpinnedApps.length;
 
@@ -798,20 +853,6 @@ export default function ApplicationHubPage() {
               )}
             </div>
           </div>
-        </div>
-
-        {/* Category Tabs */}
-        <div className="flex flex-wrap gap-2 mt-3">
-          <button onClick={() => setActiveCategory(null)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${activeCategory === null ? "bg-[#8B1515] text-white border-[#8B1515]" : "bg-white text-[#6B7280] border-[#D1D5DB] hover:border-[#FDB813] hover:text-[#1A1A2E]"}`}>
-            ทั้งหมด
-          </button>
-          {appCategories.map((cat) => (
-            <button key={cat.id} onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${activeCategory === cat.id ? "bg-[#8B1515] text-white border-[#8B1515]" : "bg-white text-[#6B7280] border-[#D1D5DB] hover:border-[#FDB813] hover:text-[#1A1A2E]"}`}>
-              {cat.name}
-            </button>
-          ))}
         </div>
 
         {/* ─── Important Announcements ─── */}
@@ -889,6 +930,26 @@ export default function ApplicationHubPage() {
           onApply={(filters) => setAdvancedFilters(filters)}
           onClose={() => setShowAdvancedSearch(false)}
         />
+      )}
+
+      {/* ─── Toast Notification ─── */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 shadow-lg border text-sm font-medium flex items-center gap-2 animate-[slideUp_0.3s_ease-out] transition-all ${
+            toast.type === "error"
+              ? "bg-[#FCE4E8] border-[#A31D1D] text-[#A31D1D]"
+              : toast.type === "warning"
+                ? "bg-[#FFF8E1] border-[#FDB813] text-[#8B6914]"
+                : "bg-[#ECFDF5] border-[#059669] text-[#065F46]"
+          }`}
+        >
+          <span>{toast.message}</span>
+          <button onClick={() => setToast(null)} className="ml-2 opacity-60 hover:opacity-100">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       )}
     </div>
   );

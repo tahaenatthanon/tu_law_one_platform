@@ -31,6 +31,8 @@ export interface AppHubState {
   customApps: Application[];
   /** Status overrides keyed by app id */
   appStatusOverrides: Record<string, AppStatus>;
+  /** Sub-app status overrides keyed by `${appId}:${subId}` */
+  subAppStatusOverrides: Record<string, AppStatus>;
   /** Raw custom calendar events (includes soft-deleted) */
   customCalendarEvents: CalendarEvent[];
   /** Pinned app IDs */
@@ -56,6 +58,7 @@ export interface AppHubContextValue extends AppHubState {
   updateApp: (id: string, updates: Partial<Application>) => void;
   removeApp: (id: string) => void;
   updateAppStatus: (id: string, status: AppStatus) => void;
+  updateSubAppStatus: (appId: string, subId: string, status: AppStatus) => void;
   togglePin: (id: string) => void;
 
   // ── Calendar mutations ──
@@ -79,6 +82,7 @@ export interface AppHubContextValue extends AppHubState {
 const DEFAULT_STATE: AppHubState = {
   customApps: [],
   appStatusOverrides: {},
+  subAppStatusOverrides: {},
   customCalendarEvents: [],
   pinnedIds: new Set(["eoffice", "academic"]),
   categoryColorOverrides: {},
@@ -136,6 +140,7 @@ export function AppHubProvider({ children }: { children: ReactNode }) {
     setState({
       customApps: loadFromStorage<Application[]>("app-hub-custom-apps", []),
       appStatusOverrides: loadFromStorage<Record<string, AppStatus>>("app-hub-status-overrides", {}),
+      subAppStatusOverrides: loadFromStorage<Record<string, AppStatus>>("app-hub-sub-status-overrides", {}),
       customCalendarEvents: loadFromStorage<CalendarEvent[]>("app-hub-custom-events", []),
       pinnedIds: loadFromStorage<string[]>("app-hub-pins", ["eoffice", "academic"]).reduce(
         (s, id) => s.add(id), new Set<string>()
@@ -152,6 +157,7 @@ export function AppHubProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     saveToStorage("app-hub-custom-apps", state.customApps);
     saveToStorage("app-hub-status-overrides", state.appStatusOverrides);
+    saveToStorage("app-hub-sub-status-overrides", state.subAppStatusOverrides);
     saveToStorage("app-hub-custom-events", state.customCalendarEvents);
     saveToStorage("app-hub-pins", [...state.pinnedIds]);
     saveToStorage("app-hub-cat-colors", state.categoryColorOverrides);
@@ -171,8 +177,12 @@ export function AppHubProvider({ children }: { children: ReactNode }) {
     return merged.map((a) => ({
       ...a,
       status: state.appStatusOverrides[a.id] ?? a.status,
+      subApps: a.subApps.map((s) => ({
+        ...s,
+        status: state.subAppStatusOverrides[`${a.id}:${s.id}`] ?? s.status,
+      })),
     }));
-  }, [state.customApps, state.appStatusOverrides]);
+  }, [state.customApps, state.appStatusOverrides, state.subAppStatusOverrides]);
 
   const allCalendarEvents = useMemo(() => {
     const deletedIds = new Set(
@@ -244,6 +254,13 @@ export function AppHubProvider({ children }: { children: ReactNode }) {
     update((prev) => ({
       ...prev,
       appStatusOverrides: { ...prev.appStatusOverrides, [id]: status },
+    }));
+  }, [update]);
+
+  const updateSubAppStatus = useCallback((appId: string, subId: string, status: AppStatus) => {
+    update((prev) => ({
+      ...prev,
+      subAppStatusOverrides: { ...prev.subAppStatusOverrides, [`${appId}:${subId}`]: status },
     }));
   }, [update]);
 
@@ -374,6 +391,7 @@ export function AppHubProvider({ children }: { children: ReactNode }) {
       updateApp,
       removeApp,
       updateAppStatus,
+      updateSubAppStatus,
       togglePin,
       addCalendarEvent,
       updateCalendarEvent,
@@ -394,6 +412,7 @@ export function AppHubProvider({ children }: { children: ReactNode }) {
       updateApp,
       removeApp,
       updateAppStatus,
+      updateSubAppStatus,
       togglePin,
       addCalendarEvent,
       updateCalendarEvent,

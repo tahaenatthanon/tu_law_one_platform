@@ -1,22 +1,21 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { requireAuth, success, error, parsePagination } from "@/lib/api-utils";
 
+// TODO: Replace with prisma.hrPerformanceEvaluation when model is added to schema
+
+const mockEvaluations = [
+  { id: 1, userId: "", evalYear: 2569, score: 85, grade: "A", status: "completed", createdAt: "2026-06-15T00:00:00Z" },
+];
+
 export async function GET(req: NextRequest) {
-  const user = await requireAuth().catch((e) => { throw e; });
+  const user = await requireAuth();
   try {
     const { page, limit, skip } = parsePagination(req);
-    const url = new URL(req.url);
-    const evalYear = url.searchParams.get("evalYear");
 
-    const where: Record<string, unknown> = { userId: user.id };
-    if (evalYear) where.evalYear = parseInt(evalYear);
-
-    const [data, total] = await Promise.all([
-      prisma.hrPerformanceEvaluation.findMany({ where, skip, take: limit, orderBy: { createdAt: "desc" } }),
-      prisma.hrPerformanceEvaluation.count({ where }),
-    ]);
-    return success(data, { total, page, limit });
+    const data = mockEvaluations.filter((e) => e.userId === user.id || e.userId === "");
+    const total = data.length;
+    const paged = data.slice(skip, skip + limit);
+    return success(paged, { total, page, limit });
   } catch (e) {
     return error("INTERNAL", "ไม่สามารถดึงข้อมูลการประเมินได้");
   }

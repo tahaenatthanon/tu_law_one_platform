@@ -43,6 +43,8 @@ export const appCategories = [
   { id: "storage", name: "ระบบจัดเก็บ" },
   { id: "academic", name: "ระบบงานวิชาการ" },
   { id: "hr", name: "ระบบงานบุคคล" },
+  { id: "projects", name: "โครงการ" },
+  { id: "bookmeeting", name: "จองห้องประชุม" },
 ];
 
 export const applications: Application[] = [
@@ -50,79 +52,126 @@ export const applications: Application[] = [
   {
     id: "erp",
     name: "ERP",
-    description: "ระบบบริหารทรัพยากรองค์กร — งบประมาณ จัดซื้อ เงินเดือน ประเมินผล",
+    description: "งบประมาณ การเงิน พัสดุ ครุภัณฑ์ รายงาน",
     url: "#",
     icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z",
     category: "erp",
     status: "online",
     subApps: [
-      { id: "budget", name: "ระบบงบประมาณ", description: "ติดตามงบประมาณรายจ่ายประจำปี", url: "https://budget.law.tu.ac.th", status: "online" },
-      { id: "purchase", name: "ระบบจัดซื้อจัดจ้าง", description: "E-Purchasing ตามระเบียบพัสดุ", url: "https://purchase.law.tu.ac.th", status: "online" },
-      { id: "hr-salary", name: "ระบบเงินเดือน", description: "สลิปเงินเดือนและประวัติการจ่าย", url: "https://hr.law.tu.ac.th/salary", status: "online" },
-      { id: "hr-eval", name: "ระบบประเมินผล", description: "ประเมินผลงานประจำปี", url: "https://hr.law.tu.ac.th/eval", status: "offline" },
+      { id: "erp-budget", name: "งบประมาณ", description: "ติดตามงบประมาณรายจ่ายประจำปี", url: "https://erp.law.tu.ac.th/budget", status: "online" },
+      { id: "erp-finance", name: "การเงิน", description: "บริหารการเงิน รายรับ-รายจ่าย", url: "https://erp.law.tu.ac.th/finance", status: "online" },
+      { id: "erp-supply", name: "พัสดุ", description: "จัดการพัสดุและสินค้าคงคลัง", url: "https://erp.law.tu.ac.th/supply", status: "online" },
+      { id: "erp-asset", name: "ครุภัณฑ์", description: "ทะเบียนครุภัณฑ์และทรัพย์สิน", url: "https://erp.law.tu.ac.th/asset", status: "online" },
+      { id: "erp-report", name: "รายงาน", description: "รายงานสรุปผลการดำเนินงาน", url: "https://erp.law.tu.ac.th/report", status: "online" },
     ],
+    allowedRoles: ["super_admin", "system_admin", "dean", "dept_admin"],
   },
 
   // ─── E-Office ───
   {
     id: "eoffice",
     name: "E-Office",
-    description: "ระบบสารบรรณ ประกาศ จองห้องประชุม และ IT Helpdesk",
+    description: "ระบบสารบรรณ — หนังสือเข้า-ออก เวียนเอกสาร Workflow อนุมัติ ประชุม",
     url: "#",
     icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
     category: "eoffice",
     status: "online",
     subApps: [
-      { id: "eoffice-sys", name: "ระบบ E-Office", description: "สารบรรณอิเล็กทรอนิกส์", url: "https://eoffice.law.tu.ac.th", status: "online" },
-      { id: "announce", name: "ระบบประกาศข่าว", description: "จัดการประกาศและข่าวสาร", url: "https://announce.law.tu.ac.th", status: "offline" },
-      { id: "room-booking", name: "ระบบจองห้องประชุม", description: "จองห้องประชุมออนไลน์", url: "https://room.law.tu.ac.th", status: "online" },
-      { id: "it-helpdesk", name: "IT Helpdesk", description: "แจ้งปัญหา IT", url: "https://helpdesk.law.tu.ac.th", status: "online" },
+      { id: "eoffice-in", name: "หนังสือเข้า", description: "รับและลงทะเบียนหนังสือเข้า", url: "https://eoffice.law.tu.ac.th/in", status: "online" },
+      { id: "eoffice-out", name: "หนังสือออก", description: "ออกและติดตามหนังสือออก", url: "https://eoffice.law.tu.ac.th/out", status: "online" },
+      { id: "eoffice-circulate", name: "เวียนเอกสาร", description: "เวียนเอกสารภายในหน่วยงาน", url: "https://eoffice.law.tu.ac.th/circulate", status: "online" },
+      { id: "eoffice-workflow", name: "Workflow อนุมัติ", description: "กำหนดขั้นตอนและอนุมัติออนไลน์", url: "https://eoffice.law.tu.ac.th/workflow", status: "online" },
+      { id: "eoffice-meeting", name: "ประชุม", description: "จัดการวาระประชุมและมติที่ประชุม", url: "https://eoffice.law.tu.ac.th/meeting", status: "online" },
     ],
+    allowedRoles: ["super_admin", "system_admin", "dean", "dept_admin", "user"],
   },
 
   // ─── ระบบจัดเก็บ ───
   {
     id: "storage",
     name: "ระบบจัดเก็บ",
-    description: "คลังเอกสาร ห้องสมุด และแผนการสอน",
+    description: "คลังเอกสาร 3 ระดับ — Central / Department / Personal Pool พร้อม OCR",
     url: "#",
     icon: "M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z",
     category: "storage",
     status: "online",
     subApps: [
-      { id: "library", name: "ระบบห้องสมุด", description: "สืบค้น จอง ยืม-คืนออนไลน์", url: "https://library.law.tu.ac.th", status: "maintenance" },
-      { id: "syllabus", name: "ระบบแผนการสอน", description: "จัดทำและเผยแพร่ Syllabus", url: "https://syllabus.law.tu.ac.th", status: "online" },
+      { id: "storage-central", name: "Central Pool", description: "คลังเอกสารกลางสำหรับทุกหน่วยงาน", url: "https://storage.law.tu.ac.th/central", status: "online" },
+      { id: "storage-dept", name: "Department Pool", description: "คลังเอกสารระดับแผนก", url: "https://storage.law.tu.ac.th/dept", status: "online" },
+      { id: "storage-personal", name: "Personal Pool", description: "คลังเอกสารส่วนตัว 5 GB", url: "https://storage.law.tu.ac.th/personal", status: "online" },
+      { id: "storage-version", name: "Version", description: "ประวัติการแก้ไขและย้อนเวอร์ชัน", url: "https://storage.law.tu.ac.th/version", status: "online" },
+      { id: "storage-ocr", name: "OCR Search", description: "ค้นหาข้อความในเอกสารด้วย OCR", url: "https://storage.law.tu.ac.th/ocr", status: "online" },
     ],
+    allowedRoles: ["super_admin", "system_admin", "dean", "dept_admin", "user"],
   },
 
   // ─── ระบบงานวิชาการ ───
   {
     id: "academic",
     name: "ระบบงานวิชาการ",
-    description: "ทะเบียนนักศึกษา กิจกรรมนักศึกษา และฝึกงาน",
+    description: "หลักสูตร รายวิชา ตารางเรียน ตารางสอบ คำร้อง",
     url: "#",
     icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
     category: "academic",
     status: "online",
     subApps: [
-      { id: "regis", name: "ระบบทะเบียนนักศึกษา", description: "ลงทะเบียน ผลการเรียน Transcript", url: "https://regis.law.tu.ac.th", status: "online" },
-      { id: "std-activity", name: "ระบบกิจกรรมนักศึกษา", description: "ลงทะเบียนกิจกรรม ชั่วโมงกิจกรรม", url: "https://activity.law.tu.ac.th", status: "online" },
-      { id: "internship", name: "ระบบฝึกงาน", description: "จัดการข้อมูลการฝึกงานและรายงานผล", url: "https://intern.law.tu.ac.th", status: "online" },
+      { id: "acad-curriculum", name: "หลักสูตร", description: "จัดการหลักสูตรและโครงสร้างหลักสูตร", url: "https://academic.law.tu.ac.th/curriculum", status: "online" },
+      { id: "acad-course", name: "รายวิชา", description: "ข้อมูลรายวิชาและคำอธิบายรายวิชา", url: "https://academic.law.tu.ac.th/course", status: "online" },
+      { id: "acad-schedule", name: "ตารางเรียน", description: "ตารางเรียนรายภาคการศึกษา", url: "https://academic.law.tu.ac.th/schedule", status: "online" },
+      { id: "acad-exam", name: "ตารางสอบ", description: "ตารางสอบกลางภาคและปลายภาค", url: "https://academic.law.tu.ac.th/exam", status: "online" },
+      { id: "acad-request", name: "คำร้อง", description: "ยื่นคำร้องออนไลน์", url: "https://academic.law.tu.ac.th/request", status: "online" },
     ],
+    allowedRoles: ["super_admin", "system_admin", "dean", "dept_admin", "user"],
   },
 
   // ─── ระบบงานบุคคล ───
   {
     id: "hr",
     name: "ระบบงานบุคคล",
-    description: "ระบบลาออนไลน์และจัดการข้อมูลบุคลากร",
+    description: "ประวัติบุคลากร ลา เวลาทำงาน ประเมินผล อบรม",
     url: "#",
     icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
     category: "hr",
     status: "online",
     subApps: [
-      { id: "hr-leave", name: "ระบบลาออนไลน์", description: "ยื่นคำขอลา ติดตามสถานะ", url: "https://hr.law.tu.ac.th/leave", status: "online" },
+      { id: "hr-profile", name: "ประวัติบุคลากร", description: "ข้อมูลประวัติบุคลากรและทะเบียนประวัติ", url: "https://hr.law.tu.ac.th/profile", status: "online" },
+      { id: "hr-leave", name: "ลา", description: "ยื่นคำขอลาและติดตามสถานะ", url: "https://hr.law.tu.ac.th/leave", status: "online" },
+      { id: "hr-time", name: "เวลาทำงาน", description: "บันทึกเวลาเข้า-ออกงาน", url: "https://hr.law.tu.ac.th/time", status: "online" },
+      { id: "hr-eval", name: "ประเมินผล", description: "ประเมินผลการปฏิบัติงานประจำปี", url: "https://hr.law.tu.ac.th/eval", status: "online" },
+      { id: "hr-training", name: "อบรม", description: "ลงทะเบียนอบรมและประวัติการอบรม", url: "https://hr.law.tu.ac.th/training", status: "online" },
     ],
+    allowedRoles: ["super_admin", "system_admin", "dean", "dept_admin"],
+  },
+
+  // ─── Book Meeting ───
+  {
+    id: "bookmeeting",
+    name: "Book Meeting",
+    description: "ระบบจองห้องประชุม — จองห้อง ดูปฏิทิน เชื่อม MS Teams",
+    url: "#",
+    icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+    category: "bookmeeting",
+    status: "online",
+    subApps: [
+      { id: "bm-book", name: "จองห้อง", description: "จองห้องประชุมตามวันและเวลา", url: "https://room.law.tu.ac.th/book", status: "online" },
+      { id: "bm-calendar", name: "ปฏิทิน", description: "ดูตารางการใช้ห้องประชุม", url: "https://room.law.tu.ac.th/calendar", status: "online" },
+      { id: "bm-teams", name: "MS Teams", description: "เชื่อมต่อและสร้างลิงก์ประชุมออนไลน์", url: "https://room.law.tu.ac.th/teams", status: "online" },
+      { id: "bm-history", name: "ประวัติ", description: "ประวัติการจองย้อนหลัง", url: "https://room.law.tu.ac.th/history", status: "online" },
+    ],
+    allowedRoles: ["super_admin", "system_admin", "dean", "dept_admin", "user", "viewer"],
+  },
+
+  // ─── โครงการ ───
+  {
+    id: "projects",
+    name: "Projects",
+    description: "ระบบบริหารจัดการโครงการ — Kanban Board, Milestone Tracking, Multi-step Approval",
+    url: "/dashboard/projects",
+    icon: "M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2",
+    category: "projects",
+    status: "online",
+    subApps: [],
+    allowedRoles: ["super_admin", "system_admin", "dean", "dept_admin", "user", "viewer"],
   },
 ];
 

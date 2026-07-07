@@ -19,7 +19,6 @@ export async function createAuditLog(input: AuditLogInput): Promise<void> {
         user: input.userId ? { connect: { id: input.userId } } : undefined,
         action: input.action,
         module: input.module,
-        detail: input.detail ?? undefined,
         ipAddress: input.ipAddress ?? undefined,
         userAgent: input.userAgent ?? undefined,
       },

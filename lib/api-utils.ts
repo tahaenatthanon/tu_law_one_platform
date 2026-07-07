@@ -25,7 +25,12 @@ export async function getAuthUser() {
 
 export async function requireAuth() {
   const user = await getAuthUser();
-  if (!user) throw new Response(JSON.stringify({ success: false, error: { code: "UNAUTHORIZED", message: "กรุณาเข้าสู่ระบบ" } }), { status: 401 });
+  if (!user) {
+    throw NextResponse.json(
+      { success: false, error: { code: "UNAUTHORIZED", message: "กรุณาเข้าสู่ระบบ" } },
+      { status: 401 }
+    );
+  }
   return user;
 }
 
