@@ -21,6 +21,8 @@ export async function createAuditLog(input: AuditLogInput): Promise<void> {
         module: input.module,
         ipAddress: input.ipAddress ?? undefined,
         userAgent: input.userAgent ?? undefined,
+        // Store detail in oldValue field (Text type) for human-readable description
+        oldValue: input.detail ?? undefined,
       },
     });
   } catch (error) {

@@ -15,6 +15,7 @@ import {
   type Application,
   type AppStatus,
   type CalendarEvent,
+  type SubApp,
 } from "@/lib/app-data";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -59,6 +60,9 @@ export interface AppHubContextValue extends AppHubState {
   removeApp: (id: string) => void;
   updateAppStatus: (id: string, status: AppStatus) => void;
   updateSubAppStatus: (appId: string, subId: string, status: AppStatus) => void;
+  addSubApp: (appId: string, subApp: SubApp) => void;
+  updateSubApp: (appId: string, subId: string, updates: Partial<SubApp>) => void;
+  removeSubApp: (appId: string, subId: string) => void;
   togglePin: (id: string) => void;
 
   // ── Calendar mutations ──
@@ -264,6 +268,56 @@ export function AppHubProvider({ children }: { children: ReactNode }) {
     }));
   }, [update]);
 
+  // ── Sub-app mutations ──
+  /** ตรวจสอบว่ามี app นี้ใน customApps แล้วหรือยัง — ถ้ายังให้ copy จาก base มา */
+  function ensureCustomApp(prev: AppHubState, appId: string, allApps: Application[]): AppHubState {
+    if (prev.customApps.some((a) => a.id === appId)) return prev;
+    const base = allApps.find((a) => a.id === appId);
+    if (!base) return prev;
+    return {
+      ...prev,
+      customApps: [...prev.customApps, { ...base, subApps: base.subApps.map((s) => ({ ...s })) }],
+    };
+  }
+
+  const addSubApp = useCallback((appId: string, subApp: SubApp) => {
+    update((prev) => {
+      const ready = ensureCustomApp(prev, appId, applications as Application[]);
+      return {
+        ...ready,
+        customApps: ready.customApps.map((a) =>
+          a.id === appId ? { ...a, subApps: [...a.subApps, subApp] } : a
+        ),
+      };
+    });
+  }, [update]);
+
+  const updateSubApp = useCallback((appId: string, subId: string, updates: Partial<SubApp>) => {
+    update((prev) => {
+      const ready = ensureCustomApp(prev, appId, applications as Application[]);
+      return {
+        ...ready,
+        customApps: ready.customApps.map((a) =>
+          a.id === appId
+            ? { ...a, subApps: a.subApps.map((s) => (s.id === subId ? { ...s, ...updates } : s)) }
+            : a
+        ),
+      };
+    });
+  }, [update]);
+
+  const removeSubApp = useCallback((appId: string, subId: string) => {
+    update((prev) => {
+      const ready = ensureCustomApp(prev, appId, applications as Application[]);
+      return {
+        ...ready,
+        customApps: ready.customApps.map((a) =>
+          a.id === appId ? { ...a, subApps: a.subApps.filter((s) => s.id !== subId) } : a
+        ),
+      };
+    });
+  }, [update]);
+
   const togglePin = useCallback((id: string) => {
     update((prev) => {
       const next = new Set(prev.pinnedIds);
@@ -392,6 +446,9 @@ export function AppHubProvider({ children }: { children: ReactNode }) {
       removeApp,
       updateAppStatus,
       updateSubAppStatus,
+      addSubApp,
+      updateSubApp,
+      removeSubApp,
       togglePin,
       addCalendarEvent,
       updateCalendarEvent,
@@ -413,6 +470,9 @@ export function AppHubProvider({ children }: { children: ReactNode }) {
       removeApp,
       updateAppStatus,
       updateSubAppStatus,
+      addSubApp,
+      updateSubApp,
+      removeSubApp,
       togglePin,
       addCalendarEvent,
       updateCalendarEvent,

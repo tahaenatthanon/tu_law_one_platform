@@ -1,11 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import RequireRole from "@/components/shared/require-role";
+import { X } from "lucide-react";
 
 type Company = { id: string; name: string; address?: string; contactName?: string; contactPhone?: string; contactEmail?: string; position?: string; quota?: number };
 type Report = { id: string; company: Company; startDate: string; endDate: string; reportTitle: string; reportContent?: string; advisorComment?: string; grade?: string; status: string; createdAt: string };
 
 export default function InternshipPage() {
+  const { data: session } = useSession();
+  const userRoles: string[] = (session?.user as any)?.roles ?? [];
+  const canCreate = userRoles.some((r: string) => ["super_admin","system_admin","dean","dept_admin","user"].includes(r));
   const [tab, setTab] = useState<"companies" | "reports">("companies");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -97,7 +103,7 @@ export default function InternshipPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="pt-0 px-6 pb-8">
       <h1 className="text-2xl font-bold text-[#1A1A2E] mb-1">ระบบฝึกงาน</h1>
       <p className="text-sm text-[#6B7280] mb-6">รายชื่อสถานประกอบการและรายงานผลฝึกงาน</p>
 
@@ -120,7 +126,7 @@ export default function InternshipPage() {
       {selectedCompany && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSelectedCompany(null)}>
           <div className="bg-white border border-[#FDB813] p-6 w-full max-w-lg mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4"><h3 className="text-lg font-bold text-[#1A1A2E]">{selectedCompany.name}</h3><button onClick={() => setSelectedCompany(null)} className="text-[#9CA3AF] hover:text-[#1A1A2E]"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="text-lg font-bold text-[#1A1A2E]">{selectedCompany.name}</h3><button onClick={() => setSelectedCompany(null)} className="text-[#9CA3AF] hover:text-[#1A1A2E]"><X className="w-5 h-5" strokeWidth={2} /></button></div>
             <div className="space-y-2 text-sm">
               {selectedCompany.position && <div><span className="text-[#6B7280]">ตำแหน่ง:</span> {selectedCompany.position}</div>}
               {selectedCompany.address && <div><span className="text-[#6B7280]">ที่อยู่:</span> {selectedCompany.address}</div>}

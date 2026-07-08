@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       prisma.hrPayslip.count({ where }),
     ]);
     return success(data, { total, page, limit });
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถดึงข้อมูลเงินเดือนได้");
   }
 }

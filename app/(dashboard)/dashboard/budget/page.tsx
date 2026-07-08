@@ -1,11 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import RequireRole from "@/components/shared/require-role";
 
 type Budget = { id: string; fiscalYear: number; departmentId: number; budgetType: string; totalAmount: number; usedAmount: number; remainingAmount: number; status: string };
 type BudgetReq = { id: string; title: string; amount: number; reason?: string; status: string; createdAt: string };
 
 export default function BudgetPage() {
+  const { data: session } = useSession();
+  const userRoles: string[] = (session?.user as any)?.roles ?? [];
+  const canRequest = userRoles.some((r: string) => ["super_admin","system_admin","dean","dept_admin"].includes(r));
   const [tab, setTab] = useState<"view" | "request">("view");
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,10 +50,11 @@ export default function BudgetPage() {
     setSubmitLoading(false);
   };
 
-  const formatMoney = (n: number) => `฿${n.toLocaleString("th-TH", { minimumFractionDigits: 2 })}`;
+  const formatMoney = (n: number | undefined | null) => n != null ? `฿${n.toLocaleString("th-TH", { minimumFractionDigits: 2 })}` : "฿0.00";
 
   return (
-    <div className="p-8">
+    <RequireRole roles={["super_admin","system_admin","dean","dept_admin","user","viewer"]}>
+    <div className="pt-0 px-6 pb-8">
       <h1 className="text-2xl font-bold text-[#1A1A2E] mb-1">ระบบงบประมาณ</h1>
       <p className="text-sm text-[#6B7280] mb-6">ดูงบประมาณและขออนุมัติงบ</p>
 
@@ -103,5 +109,6 @@ export default function BudgetPage() {
         </div>
       )}
     </div>
+    </RequireRole>
   );
 }

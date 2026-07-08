@@ -3,13 +3,14 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import {
+  applications,
   appCategories,
+  calendarEvents,
   type Application,
   type AppStatus,
   type CalendarEvent,
   type UserRole,
 } from "@/lib/app-data";
-import { useAppHub } from "@/lib/app-hub-context";
 
 /* ═══════════════════════════════════════════════════════════════
    Helpers
@@ -21,6 +22,14 @@ const statusMap: Record<AppStatus, { label: string; dot: string; text: string }>
   online: { label: "ออนไลน์", dot: "bg-green-500", text: "text-green-600" },
   offline: { label: "ออฟไลน์", dot: "bg-red-500", text: "text-red-500" },
   maintenance: { label: "กำลังบำรุงรักษา", dot: "bg-yellow-500", text: "text-yellow-600" },
+};
+
+const eventCategoryMap: Record<CalendarEvent["category"], { label: string; dot: string; text: string; hex: string }> = {
+  meeting: { label: "ประชุม", dot: "bg-purple-500", text: "text-purple-600", hex: "#a855f7" },
+  seminar: { label: "สัมมนา", dot: "bg-blue-500", text: "text-blue-600", hex: "#3b82f6" },
+  exam: { label: "สอบ", dot: "bg-orange-500", text: "text-orange-600", hex: "#f97316" },
+  holiday: { label: "วันหยุด", dot: "bg-red-500", text: "text-red-500", hex: "#ef4444" },
+  deadline: { label: "กำหนดส่ง", dot: "bg-pink-500", text: "text-pink-600", hex: "#ec4899" },
 };
 
 const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -52,23 +61,15 @@ function AppIcon({ app, pinned, onTogglePin, onClick }: {
     erp: "bg-[#8B1515] hover:bg-[#A31D1D]", eoffice: "bg-[#8B1515] hover:bg-[#A31D1D]",
     storage: "bg-[#8B1515] hover:bg-[#A31D1D]", academic: "bg-[#8B1515] hover:bg-[#A31D1D]",
     hr: "bg-[#8B1515] hover:bg-[#A31D1D]",
-    projects: "bg-[#8B1515] hover:bg-[#A31D1D]",
-    bookmeeting: "bg-[#8B1515] hover:bg-[#A31D1D]",
   };
-  const iconBg = isFolder
-    ? (domainColors[app.category] ?? "bg-[#8B1515] hover:bg-[#A31D1D]")
-    : isOffline
-      ? "bg-gray-300"
-      : "bg-[#8B1515] hover:bg-[#A31D1D]";
-  const cursorClass = isOffline ? "cursor-not-allowed opacity-60" : "cursor-pointer";
+  const iconBg = isFolder ? (domainColors[app.category] ?? "bg-[#8B1515] hover:bg-[#A31D1D]") : (isOffline ? "bg-gray-400 hover:bg-gray-500" : "bg-[#8B1515] hover:bg-[#A31D1D]");
 
   return (
     <div className="relative group">
       {/* Icon */}
       <button
         onClick={() => onClick(app)}
-        disabled={isOffline}
-        className={`w-full aspect-square transition-colors flex flex-col items-center justify-center gap-1 shadow-sm hover:shadow-md relative ${iconBg} ${cursorClass}`}
+        className={`w-full aspect-square transition-colors flex flex-col items-center justify-center gap-1 shadow-sm hover:shadow-md relative ${iconBg}`}
       >
         <svg className={`w-8 h-8 ${isOffline ? "text-gray-200" : "text-[#FDB813]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={app.icon} />
@@ -104,9 +105,9 @@ function AppIcon({ app, pinned, onTogglePin, onClick }: {
 
       {/* Name below */}
       <div className="mt-1.5 text-center">
-        <p className={`text-xs font-medium leading-tight line-clamp-2 ${isOffline ? "text-[#9CA3AF]" : "text-[#1A1A2E]"}`}>{app.name}</p>
-        <p className={`text-[10px] mt-0.5 flex items-center justify-center gap-1 ${isOffline ? "text-red-400" : s.text}`}>
-          <span className={`inline-block w-2 h-2 rounded-full ${s.dot}`} />{s.label}
+        <p className={`text-sm font-medium leading-tight line-clamp-2 ${isOffline ? "text-[#9CA3AF]" : "text-[#1A1A2E]"}`}>{app.name}</p>
+        <p className={`text-xs mt-0.5 flex items-center justify-center gap-1 ${isOffline ? "text-red-400" : s.text}`}>
+          <span className={`inline-block w-1.5 h-1.5 rounded-full ${s.dot}`} />{s.label}
         </p>
       </div>
     </div>
@@ -160,7 +161,7 @@ function LoginGate({ app, onClose }: { app: Application; onClose: () => void }) 
         if (isFolder) {
           setAuthenticated(true);
         } else {
-          window.open(app.url, "_blank", "noopener,noreferrer");
+          window.open(app.url, "_blank");
           onClose();
         }
       } else {
@@ -189,26 +190,15 @@ function LoginGate({ app, onClose }: { app: Application; onClose: () => void }) 
         </div>
 
         {isOffline && (
-          <div className="bg-[#FCE4E8] border-2 border-[#A31D1D] p-4 mb-4">
-            <div className="flex items-center gap-2 mb-1">
-              <svg className="w-5 h-5 text-[#A31D1D] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-sm font-bold text-[#A31D1D]">⚠️ ระบบนี้ไม่สามารถเข้าใช้งานได้ในขณะนี้</p>
-            </div>
-            <p className="text-xs text-[#A31D1D]/80 ml-7">ระบบอยู่ในสถานะ <strong>ออฟไลน์</strong> — กรุณาติดต่อผู้ดูแลระบบ หรือลองอีกครั้งในภายหลัง</p>
+          <div className="bg-[#FCE4E8] border border-[#A31D1D] p-3 mb-4 text-xs text-[#A31D1D]">
+            <p className="font-semibold">⚠️ ระบบนี้ไม่สามารถเข้าใช้งานได้ในขณะนี้</p>
+            <p>ระบบอยู่ในสถานะออฟไลน์ — กรุณาติดต่อผู้ดูแลระบบ</p>
           </div>
         )}
         {isMaintenance && (
-          <div className="bg-[#FFF8E1] border-2 border-[#FDB813] p-4 mb-4">
-            <div className="flex items-center gap-2 mb-1">
-              <svg className="w-5 h-5 text-[#8B6914] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <p className="text-sm font-bold text-[#8B6914]">🔧 ระบบนี้อยู่ในระหว่างการบำรุงรักษา</p>
-            </div>
-            <p className="text-xs text-[#8B6914]/80 ml-7">คุณยังสามารถเข้าใช้งานได้ แต่อาจพบปัญหาหรือฟีเจอร์บางอย่างไม่พร้อมใช้งาน</p>
+          <div className="bg-[#FFF8E1] border border-[#FDB813] p-3 mb-4 text-xs text-[#8B6914]">
+            <p className="font-semibold">🔧 ระบบนี้อยู่ในระหว่างการบำรุงรักษา</p>
+            <p>คุณยังสามารถเข้าใช้งานได้ แต่อาจพบปัญหาบางประการ</p>
           </div>
         )}
 
@@ -216,40 +206,18 @@ function LoginGate({ app, onClose }: { app: Application; onClose: () => void }) 
         {isFolder && authenticated && app.subApps.length > 0 && (
           <div className="space-y-1.5 mb-4">
             {app.subApps.map((sub) => {
-              const subOffline = sub.status === "offline";
-              const subMaintenance = sub.status === "maintenance";
+              const ss = statusMap[sub.status];
               return (
-                <div
-                  key={sub.id}
-                  className={`flex items-center p-2.5 border transition-colors ${
-                    subOffline
-                      ? "border-gray-200 bg-gray-50 opacity-60"
-                      : subMaintenance
-                        ? "border-[#FDB813]/50 bg-[#FFF8E1] hover:border-[#FDB813] hover:bg-[#FFF4CC] cursor-pointer"
-                        : "border-[#D1D5DB] hover:border-[#FDB813] hover:bg-[#FDB813]/5 cursor-pointer"
-                  }`}
-                  onClick={() => {
-                    if (!subOffline) {
-                      window.open(sub.url, "_blank", "noopener,noreferrer");
-                    }
-                  }}
-                  role={subOffline ? undefined : "button"}
-                  tabIndex={subOffline ? undefined : 0}
-                  onKeyDown={(e) => {
-                    if (!subOffline && (e.key === "Enter" || e.key === " ")) {
-                      e.preventDefault();
-                      window.open(sub.url, "_blank", "noopener,noreferrer");
-                    }
-                  }}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className={`text-sm font-medium ${subOffline ? "text-[#9CA3AF]" : "text-[#1A1A2E]"}`}>
-                      {sub.name}
-                      {subMaintenance && <span className="ml-1.5 text-[9px] px-1.5 py-0.5 bg-yellow-200 text-yellow-800 rounded-full font-medium">กำลังบำรุงรักษา</span>}
-                    </p>
-                    <p className={`text-[10px] mt-0.5 ${subOffline ? "text-[#C4C8CC]" : "text-[#6B7280]"}`}>{sub.description}</p>
+                <a key={sub.id} href={sub.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2.5 border border-[#D1D5DB] hover:border-[#FDB813] hover:bg-[#FDB813]/5 transition-colors group">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#1A1A2E]">{sub.name}</p>
+                    <p className="text-[10px] text-[#6B7280] mt-0.5">{sub.description}</p>
                   </div>
-                </div>
+                  <span className={`text-[10px] flex items-center gap-1 shrink-0 ml-2 ${ss.text}`}>
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${ss.dot}`} />{ss.label}
+                  </span>
+                </a>
               );
             })}
           </div>
@@ -305,27 +273,19 @@ function LoginGate({ app, onClose }: { app: Application; onClose: () => void }) 
         )}
 
         <div className="flex gap-2">
-          {isFolder && authenticated ? (
-            <button onClick={onClose}
-              className="w-full px-4 py-2.5 text-sm font-semibold bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 focus:ring-offset-2 cursor-pointer transition-all">
-              ปิด
+          <button onClick={onClose}
+            className="flex-1 px-4 py-2.5 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">
+            {isOffline || (isFolder && authenticated) ? "ปิด" : "ยกเลิก"}
+          </button>
+          {isOffline ? (
+            <div className="flex-1 px-4 py-2.5 text-sm font-semibold text-center bg-gray-200 text-gray-400 rounded select-none">
+              ไม่สามารถเข้าใช้งานได้
+            </div>
+          ) : isFolder && authenticated ? null : (
+            <button onClick={handleEnter} disabled={isLoading || !email || !password}
+              className={`flex-1 px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isMaintenance ? "bg-[#FDB813]/70 text-[#1A1A2E] hover:bg-[#E5A800] focus:ring-[#FDB813]/50" : "bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] focus:ring-[#FDB813]/50"}`}>
+              {isLoading ? "กำลังตรวจสอบ..." : isMaintenance ? "เข้าใช้งาน (อาจมีปัญหา)" : "เข้าใช้งาน"}
             </button>
-          ) : isOffline ? (
-            <button onClick={onClose}
-              className="w-full px-4 py-2.5 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">
-              ปิด
-            </button>
-          ) : (
-            <>
-              <button onClick={onClose}
-                className="flex-1 px-4 py-2.5 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">
-                ปิด
-              </button>
-              <button onClick={handleEnter} disabled={isLoading || !email || !password}
-                className={`flex-1 px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isMaintenance ? "bg-[#FDB813]/70 text-[#1A1A2E] hover:bg-[#E5A800] focus:ring-[#FDB813]/50" : "bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] focus:ring-[#FDB813]/50"}`}>
-                {isLoading ? "กำลังตรวจสอบ..." : isMaintenance ? "เข้าใช้งาน (อาจมีปัญหา)" : "เข้าใช้งาน"}
-              </button>
-            </>
           )}
         </div>
       </div>
@@ -429,7 +389,7 @@ function AdvancedSearchModal({
    Calendar Widget
    ═══════════════════════════════════════════════════════════════ */
 
-function CalendarWidget({ events, categories }: { events: CalendarEvent[]; categories: Record<string, { label: string; hex: string }> }) {
+function CalendarWidget({ events }: { events: CalendarEvent[] }) {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
@@ -481,7 +441,7 @@ function CalendarWidget({ events, categories }: { events: CalendarEvent[]; categ
 
   const monthName = THAI_MONTHS[currentMonth];
   const yearThai = currentYear + 543;
-  const catColorMap = useMemo(() => Object.fromEntries(Object.entries(categories).map(([k, v]) => [k, v.hex])), [categories]);
+  const catColorMap = useMemo(() => Object.fromEntries(Object.entries(eventCategoryMap).map(([k, v]) => [k, v.hex])), []);
 
   return (
     <div className="bg-white border border-[#D1D5DB]">
@@ -543,7 +503,7 @@ function CalendarWidget({ events, categories }: { events: CalendarEvent[]; categ
       </div>
 
       <div className="px-5 pb-3 flex flex-wrap gap-2">
-        {Object.entries(categories).map(([key, cat]) => <span key={key} className="text-[10px] px-1.5 py-0.5 font-medium flex items-center gap-1" style={{ color: cat.hex }}><span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cat.hex }} />{cat.label}</span>)}
+        {Object.entries(eventCategoryMap).map(([key, cat]) => <span key={key} className="text-[10px] px-1.5 py-0.5 font-medium flex items-center gap-1" style={{ color: cat.hex }}><span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cat.hex }} />{cat.label}</span>)}
       </div>
 
       <div className="border-t border-[#D1D5DB] p-5">
@@ -555,7 +515,7 @@ function CalendarWidget({ events, categories }: { events: CalendarEvent[]; categ
         ) : (
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {displayEvents.map((ev) => {
-              const cat = categories[ev.category] ?? { label: ev.category, hex: "#9CA3AF" };
+              const cat = eventCategoryMap[ev.category];
               const isToday = ev.date === todayStr; const isPast = ev.date < todayStr;
               return (
                 <div key={ev.id} className={`flex gap-3 p-2 border-l-2 transition-colors ${isToday ? "border-l-[#FDB813] bg-[#FDB813]/5" : isPast ? "border-l-[#D1D5DB] opacity-60" : "border-l-transparent hover:bg-gray-50"}`}>
@@ -718,49 +678,66 @@ export default function ApplicationHubPage() {
   const { data: session } = useSession();
   const userRoles: string[] = useMemo(() => session?.user?.roles ?? [], [session?.user?.roles]);
 
-  // ── Shared state (auto-syncs with admin page) ──
-  const { allApps, allCalendarEvents, pinnedIds, togglePin, allCategories } = useAppHub();
-
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set(["eoffice", "academic"]);
+    try { const stored = localStorage.getItem("app-hub-pins"); if (stored) return new Set(JSON.parse(stored)); } catch {}
+    return new Set(["eoffice", "academic"]);
+  });
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [advancedFilters, setAdvancedFilters] = useState<{ keyword: string; dateFrom: string; dateTo: string; categories: string[] } | null>(null);
   const [loginGateApp, setLoginGateApp] = useState<Application | null>(null);
-  const [activeUserCount, setActiveUserCount] = useState<number>(0);
-  const [onlineUserCount, setOnlineUserCount] = useState<number>(0);
-  const [toast, setToast] = useState<{ message: string; type: "error" | "warning" | "info" } | null>(null);
 
-  // Auto-dismiss toast after 3 seconds
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
+  // Read from localStorage (written by admin page)
+  const [customApps] = useState<Application[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { const stored = localStorage.getItem("app-hub-custom-apps"); if (stored) return JSON.parse(stored); } catch {}
+    return [];
+  });
+  const [appStatusOverrides] = useState<Record<string, AppStatus>>(() => {
+    if (typeof window === "undefined") return {};
+    try { const stored = localStorage.getItem("app-hub-status-overrides"); if (stored) return JSON.parse(stored); } catch {}
+    return {};
+  });
+  const [customCalendarEvents] = useState<CalendarEvent[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { const stored = localStorage.getItem("app-hub-custom-events"); if (stored) return JSON.parse(stored); } catch {}
+    return [];
+  });
 
-  // Fetch real stats
-  useEffect(() => {
-    fetch("/api/stats")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success) {
-          setActiveUserCount(json.data.activeUsers);
-          setOnlineUserCount(json.data.onlineUsers);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const allApps = useMemo(() => {
+    type AppWithDeleted = Application & { deleted?: boolean };
+    const deletedIds = new Set(customApps.filter((a) => (a as AppWithDeleted).deleted).map((a) => a.id));
+    const merged = [...applications.filter((a) => !deletedIds.has(a.id)), ...customApps.filter((a) => !(a as AppWithDeleted).deleted)];
+    return merged.map((a) => ({
+      ...a, status: appStatusOverrides[a.id] ?? a.status,
+    }));
+  }, [customApps, appStatusOverrides]);
 
-  const handleOpenApp = (app: Application) => {
-    if (app.status === "offline") {
-      setToast({ message: `⚠️ "${app.name}" อยู่ในสถานะออฟไลน์ ไม่สามารถเข้าใช้งานได้ในขณะนี้`, type: "error" });
-      return;
-    }
-    setLoginGateApp(app);
+  const allCalendarEvents = useMemo(() => {
+    type CalWithDeleted = CalendarEvent & { deleted?: boolean };
+    const deletedIds = new Set(customCalendarEvents.filter((e) => (e as CalWithDeleted).deleted).map((e) => e.id));
+    const overridden = new Set(customCalendarEvents.filter((e) => !(e as CalWithDeleted).deleted).map((e) => e.id));
+    const base = calendarEvents.filter((e) => !deletedIds.has(e.id) && !overridden.has(e.id));
+    const custom = customCalendarEvents.filter((e) => !(e as CalWithDeleted).deleted);
+    return [...base, ...custom];
+  }, [customCalendarEvents]);
+
+  useEffect(() => { localStorage.setItem("app-hub-pins", JSON.stringify([...pinnedIds])); }, [pinnedIds]);
+
+  const togglePin = (id: string) => {
+    setPinnedIds((prev) => { const next = new Set(prev); if (next.has(id)) { next.delete(id); } else { next.add(id); } return next; });
   };
+
+  const handleOpenApp = (app: Application) => setLoginGateApp(app);
 
   // Filter and separate pinned/unpinned
   const { pinnedApps, unpinnedApps } = useMemo(() => {
     let list = [...allApps].filter((a) => isAppAllowed(a, userRoles));
+
+    // Category
+    if (activeCategory) list = list.filter((a) => a.category === activeCategory);
 
     // Quick search
     if (searchText.trim()) {
@@ -785,45 +762,17 @@ export default function ApplicationHubPage() {
     const unpinned = list.filter((a) => !pinnedIds.has(a.id));
 
     return { pinnedApps: pinned, unpinnedApps: unpinned };
-  }, [allApps, searchText, advancedFilters, pinnedIds, userRoles]);
+  }, [allApps, activeCategory, searchText, advancedFilters, pinnedIds, userRoles]);
 
   const totalApps = pinnedApps.length + unpinnedApps.length;
 
-  const stats = useMemo(() => {
-    const visible = allApps.filter((a) => isAppAllowed(a, userRoles));
-    return { total: visible.length, online: onlineUserCount, maint: visible.filter((a) => a.status === "maintenance").length + visible.filter((a) => a.status === "offline").length, activeUsers: activeUserCount };
-  }, [allApps, userRoles, activeUserCount, onlineUserCount]);
-
   return (
-    <div className="p-8">
-      {/* ─── Header + Stats Row ─── */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-[#1A1A2E]">Application Hub</h1>
-          <h2 className="text-base font-semibold text-[#A31D1D] mt-0.5">ศูนย์กลางแอปพลิเคชัน</h2>
-        </div>
-        <div className="flex items-center gap-4 text-right">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-[#1A1A2E]" suppressHydrationWarning>{stats.total}</p>
-            <p className="text-[10px] text-[#6B7280]">ระบบทั้งหมด</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-[#A31D1D]" suppressHydrationWarning>{stats.activeUsers}</p>
-            <p className="text-[10px] text-[#6B7280]">ผู้ใช้งาน</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600" suppressHydrationWarning>{stats.online}</p>
-            <p className="text-[10px] text-[#6B7280]">ออนไลน์</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-yellow-600" suppressHydrationWarning>{stats.maint}</p>
-            <p className="text-[10px] text-[#6B7280]">บำรุงรักษา</p>
-          </div>
-        </div>
-      </div>
+    <div className="pt-0 px-6 pb-8">
+      <h1 className="text-2xl font-bold text-[#1A1A2E] mb-1">Application Hub</h1>
+      <p className="text-sm text-[#6B7280] mb-6">ศูนย์กลางแอปพลิเคชัน</p>
 
       {/* ═══ Content + Calendar ═══ */}
-      <div className="mt-6 flex gap-6 items-start" suppressHydrationWarning>
+      <div className="flex gap-6 items-start" suppressHydrationWarning>
         <div className="flex-1 min-w-0">
         {/* ─── Toolbar: Search + Advanced + Tabs ─── */}
         <div className="flex flex-col gap-1">
@@ -855,16 +804,30 @@ export default function ApplicationHubPage() {
           </div>
         </div>
 
+        {/* Category Tabs */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <button onClick={() => setActiveCategory(null)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${activeCategory === null ? "bg-[#8B1515] text-white border-[#8B1515]" : "bg-white text-[#6B7280] border-[#D1D5DB] hover:border-[#FDB813] hover:text-[#1A1A2E]"}`}>
+            ทั้งหมด
+          </button>
+          {appCategories.map((cat) => (
+            <button key={cat.id} onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${activeCategory === cat.id ? "bg-[#8B1515] text-white border-[#8B1515]" : "bg-white text-[#6B7280] border-[#D1D5DB] hover:border-[#FDB813] hover:text-[#1A1A2E]"}`}>
+              {cat.name}
+            </button>
+          ))}
+        </div>
+
         {/* ─── Important Announcements ─── */}
         <div className="mt-4">
-          <div className="flex items-center gap-2 mb-2">
-            <svg className="w-5 h-5 text-[#FDB813]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-2 mb-1.5">
+            <svg className="w-4 h-4 text-[#FDB813]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
             </svg>
-            <h3 className="text-sm font-bold text-[#1A1A2E]">ประกาศสำคัญ</h3>
+            <h3 className="text-base font-bold text-[#1A1A2E]">ประกาศสำคัญ</h3>
           </div>
-          <div className="bg-gradient-to-r from-[#8B1515] to-[#A31D1D] border-l-4 border-[#FDB813] p-4">
-            <div className="space-y-2">
+          <div className="bg-gradient-to-r from-[#8B1515] to-[#A31D1D] border-l-4 border-[#FDB813] p-3">
+            <div className="space-y-1">
               <a href="#" className="block text-sm text-white hover:text-[#FDB813] font-medium leading-snug transition-colors">
                 ⚡ ประกาศด่วน: การปรับปรุงระบบทะเบียนนักศึกษา — วันที่ 10 ก.ค. 2569 เวลา 22:00-06:00 น.
               </a>
@@ -920,7 +883,7 @@ export default function ApplicationHubPage() {
       </div>
 
       {/* ═══ RIGHT: Calendar ═══ */}
-      <div className="w-80 shrink-0"><CalendarWidget events={allCalendarEvents} categories={allCategories} /></div>
+      <div className="w-80 shrink-0"><CalendarWidget events={allCalendarEvents} /></div>
     </div>
 
       {/* ─── Modals ─── */}
@@ -930,26 +893,6 @@ export default function ApplicationHubPage() {
           onApply={(filters) => setAdvancedFilters(filters)}
           onClose={() => setShowAdvancedSearch(false)}
         />
-      )}
-
-      {/* ─── Toast Notification ─── */}
-      {toast && (
-        <div
-          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 shadow-lg border text-sm font-medium flex items-center gap-2 animate-[slideUp_0.3s_ease-out] transition-all ${
-            toast.type === "error"
-              ? "bg-[#FCE4E8] border-[#A31D1D] text-[#A31D1D]"
-              : toast.type === "warning"
-                ? "bg-[#FFF8E1] border-[#FDB813] text-[#8B6914]"
-                : "bg-[#ECFDF5] border-[#059669] text-[#065F46]"
-          }`}
-        >
-          <span>{toast.message}</span>
-          <button onClick={() => setToast(null)} className="ml-2 opacity-60 hover:opacity-100">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
       )}
     </div>
   );

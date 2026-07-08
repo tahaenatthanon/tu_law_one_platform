@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/api-utils";
 
 export async function GET() {
+  await requireAuth();
   try {
     const totalUsers = await prisma.user.count();
     const activeUsers = await prisma.user.count({

@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { type ReactNode } from "react";
+import { ShieldOff } from "lucide-react";
 
 /**
  * RequireRole — wrapper component that checks user roles before rendering children.
@@ -31,9 +32,7 @@ export default function RequireRole({
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-[#FCE4E8] rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-[#A31D1D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m9-4a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <ShieldOff className="w-8 h-8 text-[#A31D1D]" strokeWidth={2} />
             </div>
             <h2 className="text-lg font-semibold text-[#1A1A2E] mb-1">ไม่มีสิทธิ์เข้าถึง</h2>
             <p className="text-sm text-[#6B7280]">คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณาติดต่อผู้ดูแลระบบ</p>

@@ -84,8 +84,9 @@ model Department {
   updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
   users         User[]
   documents     Document[]
-  chatRooms     ChatRoom[]
   eofficeDocuments EofficeDocument[]
+  announcements Announcement[]
+  announcementSubscriptions AnnouncementSubscription[]
 
   @@map("departments")
 }
@@ -187,9 +188,6 @@ model User {
   auditLogs     AuditLog[]
   documents     Document[]        @relation("OwnerDocuments")
   favorites     Favorite[]
-  chatMessages  ChatMessage[]
-  chatReads     ChatRead[]
-  chatMembers   ChatMember[]
   calendarAttendees CalendarAttendee[]
   announcementSubscriptions AnnouncementSubscription[]
   dashboardUserSettings DashboardUserSetting[]
@@ -214,6 +212,7 @@ model User {
   roomBookings   RoomBooking[]              @relation("RoomBookingUser")
   teachingLoads  AcademicTeachingLoad[]     @relation("TeachingLoadUser")
   helpdeskTickets HelpdeskTicket[]          @relation("TicketRequester")
+  publishedAnnouncements Announcement[]     @relation("AnnouncementPublisher")
 
   @@map("users")
 }
@@ -392,7 +391,6 @@ model StorageFile {
   deletedBy       String?   @map("deleted_by") @db.Uuid
   documents       Document[]
   documentVersions DocumentVersion[]
-  chatFiles       ChatFile[]
   entityAttachments EntityAttachment[]
 
   @@map("storage_files")
@@ -564,98 +562,7 @@ model ApplicationGroupApp {
 }
 
 // ==============================================================================
-// 9. Chat
-// ==============================================================================
-
-model ChatRoom {
-  id           String        @id @default(uuid()) @db.Uuid
-  name         String        @db.VarChar(150)
-  roomType     String        @default("group") @map("room_type") @db.VarChar(50)
-  departmentId Int?          @map("department_id")
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt    DateTime?     @map("deleted_at") @db.Timestamptz(6)
-  createdBy    String?       @map("created_by") @db.Uuid
-  updatedBy    String?       @map("updated_by") @db.Uuid
-  deletedBy    String?       @map("deleted_by") @db.Uuid
-  department   Department?   @relation(fields: [departmentId], references: [id])
-  messages     ChatMessage[]
-  members      ChatMember[]
-
-  @@map("chat_rooms")
-}
-
-model ChatMessage {
-  id        String     @id @default(uuid()) @db.Uuid
-  roomId    String     @map("room_id") @db.Uuid
-  userId    String     @map("user_id") @db.Uuid
-  message   String?    @db.Text
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt DateTime?  @map("deleted_at") @db.Timestamptz(6)
-  createdBy String?    @map("created_by") @db.Uuid
-  updatedBy String?    @map("updated_by") @db.Uuid
-  deletedBy String?    @map("deleted_by") @db.Uuid
-  room      ChatRoom   @relation(fields: [roomId], references: [id])
-  user      User       @relation(fields: [userId], references: [id])
-  reads     ChatRead[]
-  files     ChatFile[]
-
-  @@map("chat_messages")
-}
-
-model ChatMember {
-  id        String    @id @default(uuid()) @db.Uuid
-  roomId    String    @map("room_id") @db.Uuid
-  userId    String    @map("user_id") @db.Uuid
-  role      String    @default("member") @db.VarChar(50)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
-  createdBy String?   @map("created_by") @db.Uuid
-  updatedBy String?   @map("updated_by") @db.Uuid
-  deletedBy String?   @map("deleted_by") @db.Uuid
-  room      ChatRoom  @relation(fields: [roomId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
-
-  @@map("chat_members")
-}
-
-model ChatRead {
-  id        String      @id @default(uuid()) @db.Uuid
-  messageId String      @map("message_id") @db.Uuid
-  userId    String      @map("user_id") @db.Uuid
-  readAt    DateTime?   @map("read_at") @db.Timestamptz(6)
-  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt DateTime?   @map("deleted_at") @db.Timestamptz(6)
-  createdBy String?     @map("created_by") @db.Uuid
-  updatedBy String?     @map("updated_by") @db.Uuid
-  deletedBy String?     @map("deleted_by") @db.Uuid
-  message   ChatMessage @relation(fields: [messageId], references: [id])
-  user      User        @relation(fields: [userId], references: [id])
-
-  @@map("chat_reads")
-}
-
-model ChatFile {
-  id            String      @id @default(uuid()) @db.Uuid
-  messageId     String      @map("message_id") @db.Uuid
-  storageFileId String      @map("storage_file_id") @db.Uuid
-  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt     DateTime?   @map("deleted_at") @db.Timestamptz(6)
-  createdBy     String?     @map("created_by") @db.Uuid
-  updatedBy     String?     @map("updated_by") @db.Uuid
-  deletedBy     String?     @map("deleted_by") @db.Uuid
-  message       ChatMessage @relation(fields: [messageId], references: [id])
-  storageFile   StorageFile @relation(fields: [storageFileId], references: [id])
-
-  @@map("chat_files")
-}
-
-// ==============================================================================
-// 10. Intranet — ข่าว & ปฏิทิน
+// 9. Intranet — ข่าว & ปฏิทิน
 // ==============================================================================
 
 model AnnouncementCategory {
@@ -674,6 +581,7 @@ model AnnouncementCategory {
 model Announcement {
   id              String               @id @default(uuid()) @db.Uuid
   categoryId      Int                  @map("category_id")
+  departmentId    Int?                 @map("department_id")
   title           String               @db.VarChar(255)
   content         String?              @db.Text
   publisherUserId String               @map("publisher_user_id") @db.Uuid
@@ -687,6 +595,8 @@ model Announcement {
   updatedBy       String?              @map("updated_by") @db.Uuid
   deletedBy       String?              @map("deleted_by") @db.Uuid
   category        AnnouncementCategory @relation(fields: [categoryId], references: [id])
+  department      Department?          @relation(fields: [departmentId], references: [id])
+  publisher       User                 @relation("AnnouncementPublisher", fields: [publisherUserId], references: [id])
 
   @@map("announcements")
 }
@@ -694,7 +604,8 @@ model Announcement {
 model AnnouncementSubscription {
   id           Int                  @id @default(autoincrement())
   userId       String               @map("user_id") @db.Uuid
-  categoryId   Int                  @map("category_id")
+  categoryId   Int?                 @map("category_id")
+  departmentId Int?                 @map("department_id")
   isSubscribed Boolean              @default(true) @map("is_subscribed")
   createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -703,7 +614,8 @@ model AnnouncementSubscription {
   updatedBy    String?              @map("updated_by") @db.Uuid
   deletedBy    String?              @map("deleted_by") @db.Uuid
   user         User                 @relation(fields: [userId], references: [id])
-  category     AnnouncementCategory @relation(fields: [categoryId], references: [id])
+  category     AnnouncementCategory? @relation(fields: [categoryId], references: [id])
+  department   Department?          @relation(fields: [departmentId], references: [id])
 
   @@map("announcement_subscriptions")
 }
@@ -756,6 +668,26 @@ model CalendarAttendee {
   user      User          @relation(fields: [userId], references: [id])
 
   @@map("calendar_attendees")
+}
+
+// ==============================================================================
+// 10. Organization Stats (Intranet)
+// ==============================================================================
+
+model OrganizationStat {
+  id             Int      @id @default(autoincrement())
+  statKey        String   @unique @map("stat_key") @db.VarChar(100)
+  statValue      Int      @map("stat_value")
+  labelTh        String   @map("label_th") @db.VarChar(150)
+  labelEn        String?  @map("label_en") @db.VarChar(150)
+  icon           String?  @db.VarChar(50)
+  sortOrder      Int      @default(0) @map("sort_order")
+  isActive       Boolean  @default(true) @map("is_active")
+  lastUpdatedAt  DateTime @default(now()) @map("last_updated_at") @db.Timestamptz(6)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("organization_stats")
 }
 
 // ==============================================================================
@@ -1597,22 +1529,8 @@ model RoomBooking {
   @@map("room_bookings")
 }
 
-model FleetVehicle {
-  id           String    @id @default(uuid()) @db.Uuid
-  licensePlate String    @unique @map("license_plate") @db.VarChar(50)
-  model        String?   @db.VarChar(150)
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
-  createdBy    String?   @map("created_by") @db.Uuid
-  updatedBy    String?   @map("updated_by") @db.Uuid
-  deletedBy    String?   @map("deleted_by") @db.Uuid
-
-  @@map("fleet_vehicles")
-}
-
 // ==============================================================================
-// 23. Helpdesk / IT Support
+// 22. Helpdesk / IT Support
 // ==============================================================================
 
 model HelpdeskTicket {
