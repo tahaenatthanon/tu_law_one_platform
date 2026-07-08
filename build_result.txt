@@ -1,0 +1,134 @@
+﻿
+> tu_law_one_platform@0.1.0 build
+> npx prisma generate && next build
+
+โ— injected env (10) from .env // tip: โ multiple files { path: ['.env.local', '.env'] }
+node.exe : Loaded Prisma config from prisma.config.ts.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Loaded Prisma c...isma.config.ts. 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Prisma schema loaded from prisma\schema.prisma.
+
+โ” Generated Prisma Client (v7.8.0) to .\node_modules\@prisma\client in 776ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+โ–ฒ Next.js 16.2.10 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+โ“ Compiled successfully in 5.7s
+  Running TypeScript ...
+  Finished TypeScript in 10.8s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/91) ...
+  Generating static pages using 11 workers (22/91) 
+  Generating static pages using 11 workers (45/91) 
+  Generating static pages using 11 workers (68/91) 
+โ“ Generating static pages using 11 workers (91/91) in 605ms
+  Finalizing page optimization ...
+
+Route (app)
+โ” โ— /
+โ” ฦ’ /api/academic/courses
+โ” ฦ’ /api/academic/curriculum
+โ” ฦ’ /api/academic/exams
+โ” ฦ’ /api/academic/petitions
+โ” ฦ’ /api/academic/schedule
+โ” ฦ’ /api/announcements
+โ” ฦ’ /api/audit-log
+โ” ฦ’ /api/auth/[...nextauth]
+โ” ฦ’ /api/budget
+โ” ฦ’ /api/eoffice
+โ” ฦ’ /api/eoffice/circulation
+โ” ฦ’ /api/eoffice/incoming
+โ” ฦ’ /api/eoffice/meetings
+โ” ฦ’ /api/eoffice/outgoing
+โ” ฦ’ /api/eoffice/workflow
+โ” ฦ’ /api/erp/assets
+โ” ฦ’ /api/erp/budget
+โ” ฦ’ /api/erp/finance
+โ” ฦ’ /api/erp/inventory
+โ” ฦ’ /api/erp/reports
+โ” ฦ’ /api/evaluation
+โ” ฦ’ /api/helpdesk
+โ” ฦ’ /api/hr/attendance
+โ” ฦ’ /api/hr/evaluation
+โ” ฦ’ /api/hr/personnel
+โ” ฦ’ /api/hr/training
+โ” ฦ’ /api/internship
+โ” ฦ’ /api/intranet/contacts
+โ” ฦ’ /api/intranet/stats
+โ” ฦ’ /api/intranet/subscriptions
+โ” ฦ’ /api/leave
+โ” ฦ’ /api/library
+โ” ฦ’ /api/purchasing
+โ” ฦ’ /api/room-booking
+โ” ฦ’ /api/salary
+โ” ฦ’ /api/stats
+โ” ฦ’ /api/storage
+โ” ฦ’ /api/syllabus
+โ” โ— /dashboard
+โ” โ— /dashboard/academic/courses
+โ” โ— /dashboard/academic/curriculum
+โ” โ— /dashboard/academic/exams
+โ” โ— /dashboard/academic/petitions
+โ” โ— /dashboard/academic/schedule
+โ” โ— /dashboard/admin/apps
+โ” โ— /dashboard/announcements
+โ” โ— /dashboard/application-hub
+โ” โ— /dashboard/audit-log
+โ” โ— /dashboard/book-meeting
+โ” โ— /dashboard/budget
+โ” โ— /dashboard/documents
+โ” โ— /dashboard/documents/ocr-search
+โ” โ— /dashboard/eoffice
+โ” โ— /dashboard/eoffice/circulation
+โ” โ— /dashboard/eoffice/incoming
+โ” โ— /dashboard/eoffice/meetings
+โ” โ— /dashboard/eoffice/outgoing
+โ” โ— /dashboard/eoffice/workflow
+โ” โ— /dashboard/erp/assets
+โ” โ— /dashboard/erp/budget
+โ” โ— /dashboard/erp/finance
+โ” โ— /dashboard/erp/inventory
+โ” โ— /dashboard/erp/reports
+โ” โ— /dashboard/evaluation
+โ” โ— /dashboard/helpdesk
+โ” โ— /dashboard/hr
+โ” โ— /dashboard/hr/attendance
+โ” โ— /dashboard/hr/evaluation
+โ” โ— /dashboard/hr/leave
+โ” โ— /dashboard/hr/personnel
+โ” โ— /dashboard/hr/training
+โ” โ— /dashboard/internship
+โ” โ— /dashboard/intranet
+โ” โ— /dashboard/leave
+โ” โ— /dashboard/library
+โ” โ— /dashboard/projects
+โ” โ— /dashboard/purchasing
+โ” โ— /dashboard/room-booking
+โ” โ— /dashboard/salary
+โ” โ— /dashboard/settings
+โ” โ— /dashboard/storage/central
+โ” โ— /dashboard/storage/dept
+โ” โ— /dashboard/storage/ocr
+โ” โ— /dashboard/storage/personal
+โ” โ— /dashboard/storage/version
+โ” โ— /dashboard/syllabus
+โ” โ— /dashboard/users
+โ” โ— /login
+โ”” โ— /_not-found
+
+
+ฦ’ Proxy (Middleware)
+
+โ—  (Static)   prerendered as static content
+ฦ’  (Dynamic)  server-rendered on demand
+

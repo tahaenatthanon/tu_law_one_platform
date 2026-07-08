@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       prisma.hrLeaveRequest.count({ where }),
     ]);
     return success(data, { total, page, limit });
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถดึงข้อมูลการลาได้");
   }
 }
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       data: { userId: user.id, leaveType, reason, startDate: new Date(startDate), endDate: new Date(endDate), status: "pending", createdBy: user.id },
     });
     return success(leave);
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถยื่นคำขอลาได้");
   }
 }

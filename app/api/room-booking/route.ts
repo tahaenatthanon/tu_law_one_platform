@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       prisma.roomBooking.count({ where: whereB }),
     ]);
     return success(data, { total, page, limit });
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถดึงข้อมูลการจองได้");
   }
 }
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       include: { room: true },
     });
     return success(booking);
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถจองห้องประชุมได้");
   }
 }

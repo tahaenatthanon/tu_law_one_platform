@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import RequireRole from "@/components/shared/require-role";
+import { X } from "lucide-react";
 
 type EofficeDoc = {
   id: string; docNo: string; title: string; secretLevel: string; urgentLevel: string;
@@ -10,6 +13,10 @@ type EofficeDoc = {
 };
 
 export default function EofficePage() {
+  const { data: session } = useSession();
+  const userRoles: string[] = (session?.user as any)?.roles ?? [];
+  const canCompose = userRoles.some((r: string) => ["super_admin","system_admin","dean","dept_admin","user"].includes(r));
+
   const [tab, setTab] = useState<"inbox" | "sent" | "compose">("inbox");
   const [docs, setDocs] = useState<EofficeDoc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +64,7 @@ export default function EofficePage() {
   const statusLabel = (s: string) => ({ draft: "ฉบับร่าง", sent: "ส่งแล้ว", received: "รับแล้ว", read: "อ่านแล้ว", archived: "จัดเก็บ" }[s] ?? s);
 
   return (
-    <div className="p-8">
+    <div className="pt-0 px-6 pb-8">
       <h1 className="text-2xl font-bold text-[#1A1A2E] mb-1">ระบบ E-Office</h1>
       <p className="text-sm text-[#6B7280] mb-6">ระบบสารบรรณอิเล็กทรอนิกส์ — รับ-ส่งหนังสือ ติดตามสถานะ</p>
 
@@ -118,7 +125,7 @@ export default function EofficePage() {
       {selectedDoc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSelectedDoc(null)}>
           <div className="bg-white border border-[#FDB813] p-6 w-full max-w-2xl mx-4 shadow-xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4"><h3 className="text-lg font-bold text-[#1A1A2E]">{selectedDoc.title}</h3><button onClick={() => setSelectedDoc(null)} className="text-[#9CA3AF] hover:text-[#1A1A2E]"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="text-lg font-bold text-[#1A1A2E]">{selectedDoc.title}</h3><button onClick={() => setSelectedDoc(null)} className="text-[#9CA3AF] hover:text-[#1A1A2E]"><X className="w-5 h-5" strokeWidth={2} /></button></div>
             <div className="grid grid-cols-2 gap-2 mb-4 text-sm"><div><span className="text-[#6B7280]">เลขที่:</span> {selectedDoc.docNo}</div><div><span className="text-[#6B7280]">สถานะ:</span> {statusLabel(selectedDoc.status)}</div><div><span className="text-[#6B7280]">ชั้นความลับ:</span> {selectedDoc.secretLevel}</div><div><span className="text-[#6B7280]">หน่วยงาน:</span> {selectedDoc.senderDepartment?.name}</div></div>
             <h4 className="text-sm font-semibold text-[#1A1A2E] mb-2">ประวัติการส่งต่อ</h4>
             <div className="space-y-2">

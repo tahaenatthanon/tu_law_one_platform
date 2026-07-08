@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       prisma.helpdeskTicket.count({ where }),
     ]);
     return success(data, { total, page, limit });
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถดึงข้อมูลใบแจ้งปัญหาได้");
   }
 }
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       data: { requesterUserId: user.id, title, description, priority: priority ?? "medium", category, status: "open", createdBy: user.id },
     });
     return success(ticket);
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถแจ้งปัญหาได้");
   }
 }

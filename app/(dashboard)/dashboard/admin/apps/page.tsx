@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { ChevronDown, Check, MapPin, Settings, Pencil, ChevronRight, X, Plus, Trash2, Calendar, ShieldBan } from "lucide-react";
 import {
   appCategories,
   type Application,
@@ -62,9 +63,7 @@ function StatusSelect({ value, onChange, size }: { value: AppStatus; onChange: (
       >
         <span className={`inline-block rounded-full ${isXs ? "w-1.5 h-1.5" : "w-2 h-2"} ${selected.dot}`} />
         {selected.label}
-        <svg className={`${isXs ? "w-2.5 h-2.5" : "w-3 h-3"} ml-0.5 opacity-50`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <ChevronDown className={`${isXs ? "w-2.5 h-2.5" : "w-3 h-3"} ml-0.5 opacity-50`} strokeWidth={2} />
       </button>
       {open && (
         <div className="absolute z-50 top-full mt-1 right-0 bg-white border border-[#D1D5DB] shadow-lg min-w-[110px]">
@@ -78,9 +77,7 @@ function StatusSelect({ value, onChange, size }: { value: AppStatus; onChange: (
               <span className={`inline-block rounded-full ${isXs ? "w-1.5 h-1.5" : "w-2 h-2"} ${opt.dot}`} />
               {opt.label}
               {value === opt.value && (
-                <svg className="w-3 h-3 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
+                <Check className="w-3 h-3 ml-auto" strokeWidth={2.5} />
               )}
             </button>
           ))}
@@ -115,9 +112,7 @@ function CategorySelect({ value, onChange, extras, overrides }: { value: string;
       >
         <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: selected.hex }} />
         {selected.label}
-        <svg className="w-3 h-3 ml-auto opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <ChevronDown className="w-3 h-3 ml-auto opacity-50" strokeWidth={2} />
       </button>
       {open && (
         <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#D1D5DB] shadow-lg">
@@ -131,9 +126,7 @@ function CategorySelect({ value, onChange, extras, overrides }: { value: string;
               <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: opt.hex }} />
               {opt.label}
               {value === opt.value && (
-                <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
+                <Check className="w-4 h-4 ml-auto" strokeWidth={2.5} />
               )}
             </button>
           ))}
@@ -173,14 +166,9 @@ function LocationSelect({ value, onChange }: { value: string; onChange: (v: stri
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         className="w-full px-3 py-2 text-sm border border-[#D1D5DB] bg-white hover:border-[#FDB813] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30 cursor-pointer transition-colors flex items-center gap-1.5 text-[#1A1A2E]"
       >
-        <svg className="w-4 h-4 shrink-0 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
+        <MapPin className="w-4 h-4 shrink-0 text-[#9CA3AF]" strokeWidth={2} />
         <span className="truncate">{getLabel()}</span>
-        <svg className="w-3 h-3 ml-auto opacity-50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <ChevronDown className="w-3 h-3 ml-auto opacity-50 shrink-0" strokeWidth={2} />
       </button>
       {open && (
         <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#D1D5DB] shadow-lg max-h-56 overflow-y-auto">
@@ -212,9 +200,7 @@ function LocationSelect({ value, onChange }: { value: string; onChange: (v: stri
             >
               <span className="truncate">{opt.label}</span>
               {value === opt.value && (
-                <svg className="w-4 h-4 ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
+                <Check className="w-4 h-4 ml-auto shrink-0" strokeWidth={2.5} />
               )}
             </button>
           ))}
@@ -230,6 +216,7 @@ function LocationSelect({ value, onChange }: { value: string; onChange: (v: stri
 
 function AdminPanel({
   appList, onAdd, onUpdate, onRemove, onUpdateAppStatus, onUpdateSubAppStatus,
+  onAddSubApp, onUpdateSubApp, onRemoveSubApp,
 }: {
   appList: Application[];
   onAdd: (app: Application) => void;
@@ -237,11 +224,25 @@ function AdminPanel({
   onRemove: (id: string) => void;
   onUpdateAppStatus: (id: string, status: AppStatus) => void;
   onUpdateSubAppStatus: (appId: string, subId: string, status: AppStatus) => void;
+  onAddSubApp: (appId: string, subApp: SubApp) => void;
+  onUpdateSubApp: (appId: string, subId: string, updates: Partial<SubApp>) => void;
+  onRemoveSubApp: (appId: string, subId: string) => void;
 }) {
   const [showStatusPanel, setShowStatusPanel] = useState(false);
   const [showEditInfoPanel, setShowEditInfoPanel] = useState(false);
   const [deleteAppTarget, setDeleteAppTarget] = useState<Application | null>(null);
   const [expandedApps, setExpandedApps] = useState<Set<string>>(new Set());
+  /** รายการย่อยที่กำลังขยายใน edit info panel */
+  const [expandedSubApps, setExpandedSubApps] = useState<Set<string>>(new Set());
+  /** Modal สำหรับเพิ่ม/แก้ไขรายการย่อย */
+  const [subAppForm, setSubAppForm] = useState<{
+    appId: string;
+    editingId: string | null;
+    name: string;
+    description: string;
+    url: string;
+    status: AppStatus;
+  } | null>(null);
 
   const [editModal, setEditModal] = useState<{
     editingId: string | null;
@@ -324,15 +325,56 @@ function AdminPanel({
     setEditModal(null);
   };
 
+  // ── Sub-app form handlers ──
+  const openSubAppForm = (appId: string, sub?: SubApp) => {
+    setSubAppForm({
+      appId,
+      editingId: sub?.id ?? null,
+      name: sub?.name ?? "",
+      description: sub?.description ?? "",
+      url: sub?.url ?? "",
+      status: sub?.status ?? "online",
+    });
+  };
+
+  const closeSubAppForm = () => setSubAppForm(null);
+
+  const handleSubAppSubmit = () => {
+    if (!subAppForm || !subAppForm.name || !subAppForm.url) return;
+    if (subAppForm.editingId) {
+      onUpdateSubApp(subAppForm.appId, subAppForm.editingId, {
+        name: subAppForm.name,
+        description: subAppForm.description,
+        url: subAppForm.url,
+        status: subAppForm.status,
+      });
+    } else {
+      onAddSubApp(subAppForm.appId, {
+        id: `sub-${Date.now()}`,
+        name: subAppForm.name,
+        description: subAppForm.description,
+        url: subAppForm.url,
+        status: subAppForm.status,
+      });
+    }
+    setSubAppForm(null);
+  };
+
+  const toggleSubAppExpanded = (appId: string) => {
+    setExpandedSubApps((prev) => {
+      const next = new Set(prev);
+      if (next.has(appId)) next.delete(appId);
+      else next.add(appId);
+      return next;
+    });
+  };
+
   return (
     <>
       <div className="bg-white border border-[#FDB813]/50 p-5 mt-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-[#8B1515]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <Settings className="w-4 h-4 text-[#8B1515]" strokeWidth={2} />
             <h3 className="text-sm font-semibold text-[#1A1A2E]">จัดการแอปพลิเคชัน</h3>
             <span className="text-[10px] px-2 py-0.5 bg-[#8B1515] text-white rounded-full font-medium">Admin</span>
           </div>
@@ -343,9 +385,7 @@ function AdminPanel({
             </button>
             <button onClick={() => setShowEditInfoPanel(true)}
               className="px-4 py-2 text-sm font-medium border border-[#D1D5DB] bg-white text-[#1A1A2E] hover:border-[#FDB813] hover:bg-[#FDB813]/5 focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 cursor-pointer transition-all flex items-center gap-1.5">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
+              <Pencil className="w-4 h-4" strokeWidth={2} />
               แก้ไขข้อมูล
             </button>
             <button onClick={openAddForm}
@@ -426,24 +466,17 @@ function AdminPanel({
                   const hasSubApps = app.subApps && app.subApps.length > 0;
                   return (
                     <div key={app.id} className={`border transition-colors ${appChanged ? "border-[#FDB813] bg-[#FDB813]/5" : "border-[#D1D5DB] bg-white"}`}>
-                      {/* Parent App Row */}
-                      <div className="flex items-center justify-between gap-2 p-3">
+                      {/* Parent App Row — click to expand */}
+                      <div
+                        className={`flex items-center justify-between gap-2 p-3 ${hasSubApps ? "cursor-pointer" : ""}`}
+                        onClick={() => { if (hasSubApps) setExpandedApps((prev) => { const next = new Set(prev); if (next.has(app.id)) next.delete(app.id); else next.add(app.id); return next; }); }}
+                      >
                         {/* Expand toggle */}
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           {hasSubApps ? (
-                            <button
-                              type="button"
-                              onClick={() => setExpandedApps((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(app.id)) { next.delete(app.id); } else { next.add(app.id); }
-                                return next;
-                              })}
-                              className="shrink-0 w-5 h-5 flex items-center justify-center text-[#6B7280] hover:text-[#1A1A2E] cursor-pointer transition-colors"
-                            >
-                              <svg className={`w-3 h-3 transition-transform ${expanded ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                              </svg>
-                            </button>
+                            <span className="shrink-0 w-5 h-5 flex items-center justify-center text-[#6B7280]">
+                              <ChevronRight className={`w-3 h-3 transition-transform ${expanded ? "rotate-90" : ""}`} strokeWidth={2.5} />
+                            </span>
                           ) : (
                             <span className="w-5 shrink-0" />
                           )}
@@ -455,7 +488,9 @@ function AdminPanel({
                             </span>
                           </div>
                         </div>
-                        <StatusSelect value={pendingStatus} onChange={(v) => setPendingStatus(app.id, v)} />
+                        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                          <StatusSelect value={pendingStatus} onChange={(v) => setPendingStatus(app.id, v)} />
+                        </div>
                       </div>
 
                       {/* Sub Apps (expandable) */}
@@ -496,56 +531,100 @@ function AdminPanel({
         {/* Edit Info Panel Modal */}
         {showEditInfoPanel && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowEditInfoPanel(false)}>
-            <div className="bg-white border border-[#FDB813] shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white border border-[#FDB813] shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between p-5 pb-3 border-b border-[#D1D5DB] shrink-0">
                 <div>
                   <h3 className="text-sm font-semibold text-[#1A1A2E]">แก้ไขข้อมูลแอปพลิเคชัน</h3>
-                  <p className="text-[10px] text-[#9CA3AF] mt-0.5">คลิก ✏️ เพื่อแก้ไขชื่อ, URL, หมวดหมู่ — คลิก 🗑️ เพื่อลบ</p>
+                  <p className="text-[10px] text-[#9CA3AF] mt-0.5">คลิก ✏️ เพื่อแก้ไขชื่อ, URL, หมวดหมู่ — คลิก ▶ เพื่อดูรายการย่อย — คลิก 🗑️ เพื่อลบ</p>
                 </div>
               </div>
-              <div className="p-5 overflow-y-auto flex-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {appList.map((app) => {
-                    const isCustom = app.id.startsWith("custom-");
-                    const isOffline = app.status === "offline";
-                    return (
-                      <div key={app.id} className="bg-white border border-[#D1D5DB] hover:border-[#FDB813]/50 hover:bg-[#FDB813]/5 transition-colors flex items-center gap-3 p-3">
-                        <div className={`w-9 h-9 shrink-0 flex items-center justify-center ${isOffline ? "bg-gray-400" : "bg-[#8B1515]"}`}>
-                          <svg className={`w-4 h-4 ${isOffline ? "text-gray-200" : "text-[#FDB813]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={app.icon} />
-                          </svg>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className="text-[13px] font-semibold text-[#1A1A2E] leading-tight">{app.name}</p>
-                            {isCustom && (
-                              <span className="text-[9px] px-1.5 py-0.5 bg-[#FDB813]/20 text-[#8B6914] rounded-full font-medium shrink-0">กำหนดเอง</span>
-                            )}
+              <div className="p-5 overflow-y-auto flex-1 space-y-2">
+                {appList.map((app) => {
+                  const isCustom = app.id.startsWith("custom-");
+                  const expanded = expandedSubApps.has(app.id);
+                  const hasSubApps = app.subApps && app.subApps.length > 0;
+                  return (
+                    <div key={app.id} className="border border-[#D1D5DB] bg-white">
+                      {/* Parent App Row — click to expand */}
+                      <div
+                        className={`flex items-center justify-between gap-2 p-3 ${hasSubApps ? "cursor-pointer" : ""}`}
+                        onClick={() => { if (hasSubApps) toggleSubAppExpanded(app.id); }}
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          {/* Expand toggle */}
+                          <span className={`shrink-0 w-5 h-5 flex items-center justify-center ${hasSubApps ? "text-[#6B7280]" : "text-[#D1D5DB]"}`}>
+                            <ChevronRight className={`w-3 h-3 transition-transform ${expanded ? "rotate-90" : ""}`} strokeWidth={2.5} />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-semibold text-[#1A1A2E] truncate">{app.name}</span>
+                              {isCustom && (
+                                <span className="text-[9px] px-1.5 py-0.5 bg-[#FDB813]/20 text-[#8B6914] rounded-full font-medium shrink-0">กำหนดเอง</span>
+                              )}
+                              {hasSubApps && (
+                                <span className="text-[10px] text-[#9CA3AF] shrink-0">({app.subApps.length})</span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-[#6B7280] line-clamp-1">{app.description}</p>
                           </div>
-                          <p className="text-[11px] text-[#6B7280] mt-0.5 line-clamp-1 leading-snug">{app.description}</p>
                         </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0">
                           <button
-                            onClick={() => { setShowEditInfoPanel(false); openEditForm(app); }}
-                            className="px-2 py-1 text-xs font-medium bg-white border border-[#D1D5DB] hover:border-[#FDB813] hover:bg-[#FDB813]/10 hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#FDB813]/30 cursor-pointer transition-all"
-                            title="แก้ไขข้อมูล"
+                            onClick={(e) => { e.stopPropagation(); setShowEditInfoPanel(false); openEditForm(app); }}
+                            className="px-2.5 py-1 text-xs font-medium border border-[#D1D5DB] bg-white text-[#1A1A2E] hover:border-[#FDB813] hover:bg-[#FDB813]/10 focus:outline-none focus:ring-2 focus:ring-[#FDB813]/30 cursor-pointer transition-all"
+                            title="แก้ไขชื่อ/URL/หมวดหมู่"
                           >
-                            แก้ไข
+                            ✏️
                           </button>
                           <button
                             onClick={() => { setShowEditInfoPanel(false); setDeleteAppTarget(app); }}
-                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer transition-colors"
+                            className="px-2.5 py-1 text-xs font-medium border border-red-200 bg-white text-red-500 hover:border-red-400 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 cursor-pointer transition-all"
                             title="ลบแอปพลิเคชัน"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            🗑️
                           </button>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+
+                      {/* Sub Apps (expandable) */}
+                      {hasSubApps && expanded && (
+                        <div className="border-t border-[#D1D5DB] bg-gray-50/50">
+                          {app.subApps.map((sub) => (
+                            <div key={sub.id} className="flex items-center justify-between gap-2 px-4 py-2 border-b border-[#D1D5DB]/50 last:border-b-0">
+                              <div className="min-w-0 flex-1 pl-1">
+                                <span className="text-xs font-medium text-[#1A1A2E] block truncate">{sub.name}</span>
+                                <span className="text-[9px] text-[#9CA3AF] hidden sm:inline truncate">{sub.url}</span>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setShowEditInfoPanel(false); openSubAppForm(app.id, sub); }}
+                                  className="p-1.5 text-[#6B7280] hover:text-[#1A1A2E] hover:bg-[#FDB813]/10 cursor-pointer transition-colors"
+                                  title="แก้ไขรายการย่อย"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); if (confirm(`ลบ "${sub.name}"?`)) { onRemoveSubApp(app.id, sub.id); } }}
+                                  className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
+                                  title="ลบรายการย่อย"
+                                >
+                                  <X className="w-3.5 h-3.5" strokeWidth={2} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openSubAppForm(app.id); }}
+                            className="flex items-center gap-1 w-full text-[10px] text-[#A31D1D] hover:text-[#8B1515] hover:bg-[#FDB813]/10 font-medium py-2 px-4 cursor-pointer transition-colors"
+                          >
+                            <Plus className="w-3 h-3" strokeWidth={2} />
+                            เพิ่มรายการย่อย
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <div className="flex justify-end gap-2 p-5 pt-3 border-t border-[#D1D5DB] shrink-0">
                 <button onClick={() => setShowEditInfoPanel(false)} className="px-5 py-2.5 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">ปิด</button>
@@ -563,14 +642,10 @@ function AdminPanel({
                 <span key={app.id} className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-gray-100 border border-[#D1D5DB]">
                   {app.name}
                   <button onClick={() => openEditForm(app)} className="p-1 text-[#6B7280] hover:text-[#1A1A2E] cursor-pointer transition-colors" title="แก้ไขแอปพลิเคชัน">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
+                    <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
                   </button>
                   <button onClick={() => setDeleteAppTarget(app)} className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer transition-colors" title="ลบแอปพลิเคชัน">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <Trash2 className="w-4 h-4" strokeWidth={2} />
                   </button>
                 </span>
               ))}
@@ -585,9 +660,7 @@ function AdminPanel({
           <div className="bg-white border border-red-300 p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <Trash2 className="w-5 h-5 text-red-600" strokeWidth={2} />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-[#1A1A2E]">ลบแอปพลิเคชัน</h4>
@@ -601,6 +674,47 @@ function AdminPanel({
             <div className="flex gap-2 justify-end">
               <button onClick={() => setDeleteAppTarget(null)} className="px-4 py-2 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">ยกเลิก</button>
               <button onClick={() => { onRemove(deleteAppTarget!.id); setDeleteAppTarget(null); }} className="px-5 py-2 text-sm font-semibold bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 cursor-pointer transition-all">ลบแอปพลิเคชัน</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-App Form Modal */}
+      {subAppForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={closeSubAppForm}>
+          <div className="bg-white border border-[#FDB813] shadow-xl w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <h4 className="text-sm font-semibold text-[#1A1A2E] mb-4">
+                {subAppForm.editingId ? "✏️ แก้ไขรายการย่อย" : "➕ เพิ่มรายการย่อย"}
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-[#1A1A2E] mb-1">ชื่อ *</label>
+                  <input type="text" value={subAppForm.name}
+                    onChange={(e) => setSubAppForm({ ...subAppForm, name: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" placeholder="ระบบรายงาน" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[#1A1A2E] mb-1">URL *</label>
+                  <input type="text" value={subAppForm.url}
+                    onChange={(e) => setSubAppForm({ ...subAppForm, url: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" placeholder="https://..." />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[#1A1A2E] mb-1">คำอธิบาย</label>
+                  <input type="text" value={subAppForm.description}
+                    onChange={(e) => setSubAppForm({ ...subAppForm, description: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-[#D1D5DB] focus:outline-none focus:border-[#FDB813] focus:ring-2 focus:ring-[#FDB813]/30" placeholder="คำอธิบายสั้นๆ" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[#1A1A2E] mb-1">สถานะ</label>
+                  <StatusSelect value={subAppForm.status} onChange={(v) => setSubAppForm({ ...subAppForm, status: v })} />
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end mt-4">
+                <button onClick={closeSubAppForm} className="px-4 py-2 text-sm font-medium border border-[#D1D5DB] text-[#6B7280] hover:bg-gray-100 hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer transition-all">ยกเลิก</button>
+                <button onClick={handleSubAppSubmit} disabled={!subAppForm.name || !subAppForm.url} className="px-5 py-2 text-sm font-semibold bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#FDB813]/50 focus:ring-offset-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed">บันทึก</button>
+              </div>
             </div>
           </div>
         </div>
@@ -725,9 +839,7 @@ function CalendarManager({
     <div className="bg-white border border-[#FDB813]/50 p-5 mt-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-[#8B1515]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
+          <Calendar className="w-4 h-4 text-[#8B1515]" strokeWidth={2} />
           <h3 className="text-sm font-semibold text-[#1A1A2E]">จัดการกิจกรรม</h3>
           <span className="text-[10px] px-2 py-0.5 bg-[#8B1515] text-white rounded-full font-medium">Admin</span>
         </div>
@@ -758,9 +870,7 @@ function CalendarManager({
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button onClick={() => openEditForm(ev)} className="px-2 py-1 text-xs font-medium bg-white border border-[#D1D5DB] hover:border-[#FDB813] hover:text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#FDB813]/30 cursor-pointer transition-all">แก้ไข</button>
                     <button onClick={() => handleDelete(ev)} className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer transition-colors" title="ลบกิจกรรม">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                    <Trash2 className="w-4 h-4" strokeWidth={2} />
                     </button>
                   </div>
                 </div>
@@ -780,9 +890,7 @@ function CalendarManager({
                 <p className="text-[10px] text-[#9CA3AF] mt-0.5">แก้ไขสีของประเภทที่มีอยู่ หรือเพิ่มประเภทใหม่</p>
               </div>
               <button onClick={() => setShowCategoryPopup(false)} className="p-1 text-[#9CA3AF] hover:text-[#1A1A2E]">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-4 h-4" strokeWidth={2} />
               </button>
             </div>
             <div className="p-4 overflow-y-auto flex-1">
@@ -828,9 +936,7 @@ function CalendarManager({
                         <div className="flex items-center gap-2">
                           <button onClick={() => { setEditingBuiltInKey(key); setEditingBuiltInName(eff.label); }}
                             className="p-1 text-[#6B7280] hover:text-[#A31D1D] cursor-pointer transition-colors" title="แก้ไขชื่อและสี">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
+                            <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
                           </button>
                           {isOverridden && (
                             <button onClick={() => handleResetBuiltIn(key)} className="text-[9px] text-[#A31D1D] hover:underline" title="คืนค่าเริ่มต้น">
@@ -871,14 +977,10 @@ function CalendarManager({
                       </span>
                       <div className="flex items-center gap-1">
                         <button onClick={() => handleEditCategory(cat.key)} className="p-1 text-[#6B7280] hover:text-[#A31D1D] cursor-pointer transition-colors" title="แก้ไขชื่อและสี">
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                          <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
                         </button>
                         <button onClick={() => handleDeleteCategory(cat.key)} className="p-1 text-red-400 hover:text-red-600 cursor-pointer transition-colors" title="ลบ">
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
+                          <X className="w-3.5 h-3.5" strokeWidth={2} />
                         </button>
                       </div>
                     </div>
@@ -931,9 +1033,7 @@ function CalendarManager({
           <div className="bg-white border border-red-300 p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <Trash2 className="w-5 h-5 text-red-600" strokeWidth={2} />
               </div>
               <div><h4 className="text-sm font-semibold text-[#1A1A2E]">ลบกิจกรรม</h4><p className="text-[11px] text-[#6B7280] mt-0.5">การกระทำนี้ไม่สามารถย้อนกลับได้</p></div>
             </div>
@@ -967,6 +1067,9 @@ export default function AdminAppsPage() {
     removeApp,
     updateAppStatus,
     updateSubAppStatus,
+    addSubApp,
+    updateSubApp,
+    removeSubApp,
     addCalendarEvent,
     updateCalendarEvent,
     removeCalendarEvent,
@@ -981,9 +1084,7 @@ export default function AdminAppsPage() {
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 bg-[#FCE4E8] rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-[#A31D1D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m9-4a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <ShieldBan className="w-8 h-8 text-[#A31D1D]" strokeWidth={2} />
           </div>
           <h2 className="text-lg font-semibold text-[#1A1A2E] mb-1">ไม่มีสิทธิ์เข้าถึง</h2>
           <p className="text-sm text-[#6B7280]">คุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณาติดต่อผู้ดูแลระบบ</p>
@@ -993,12 +1094,9 @@ export default function AdminAppsPage() {
   }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-[#1A1A2E]">จัดการ Application</h1>
-      <h2 className="text-base font-semibold text-[#A31D1D] mt-0.5">ผู้ดูแลระบบ</h2>
-      <p className="text-sm text-[#6B7280] mt-1 max-w-3xl">
-        เพิ่ม/แก้ไข/ลบ Application ที่ใช้งานผ่าน TULAW ONE PLATFORM พร้อมจัดการปฏิทินกิจกรรม
-      </p>
+    <div className="pt-0 px-6 pb-8">
+      <h1 className="text-2xl font-bold text-[#1A1A2E] mb-1">จัดการ Application</h1>
+      <p className="text-sm text-[#6B7280] mb-6">เพิ่ม/แก้ไข/ลบ Application ที่ใช้งานผ่าน TULAW ONE PLATFORM พร้อมจัดการปฏิทินกิจกรรม</p>
 
       <AdminPanel
         appList={allApps}
@@ -1007,6 +1105,9 @@ export default function AdminAppsPage() {
         onRemove={removeApp}
         onUpdateAppStatus={updateAppStatus}
         onUpdateSubAppStatus={updateSubAppStatus}
+        onAddSubApp={addSubApp}
+        onUpdateSubApp={updateSubApp}
+        onRemoveSubApp={removeSubApp}
       />
       <CalendarManager
         events={allCalendarEvents}

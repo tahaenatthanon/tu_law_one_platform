@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       prisma.erpPurchaseRequest.count({ where }),
     ]);
     return success(data, { total, page, limit });
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถดึงข้อมูลจัดซื้อได้");
   }
 }
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       include: { items: true },
     });
     return success(pr);
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถสร้างใบขอซื้อได้");
   }
 }

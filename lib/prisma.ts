@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -13,11 +12,20 @@ function createPrismaClient(): PrismaClient {
     return new PrismaClient();
   }
 
-  // Use Neon WebSocket adapter — supports transactions (needed for audit log & Google sign-in)
-  const adapter = new PrismaNeon({ connectionString: dbUrl });
+  const isNeon = dbUrl.includes("neon.tech");
 
+  if (isNeon) {
+    // Neon requires WebSocket adapter for transactions (audit log & Google sign-in)
+    const { PrismaNeon } = require("@prisma/adapter-neon");
+    const adapter = new PrismaNeon({ connectionString: dbUrl });
+    return new PrismaClient({
+      adapter,
+      log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+    });
+  }
+
+  // Standard PostgreSQL (e.g. company pgAdmin)
   return new PrismaClient({
-    adapter,
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
 }

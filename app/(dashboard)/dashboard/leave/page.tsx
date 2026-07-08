@@ -1,10 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import RequireRole from "@/components/shared/require-role";
 
 type Leave = { id: string; leaveType: string; reason?: string; startDate: string; endDate: string; status: string; approverUserId?: string; createdAt: string };
 
 export default function LeavePage() {
+  const { data: session } = useSession();
+  const userRoles: string[] = (session?.user as any)?.roles ?? [];
+  const canCreate = userRoles.some((r: string) => ["super_admin","system_admin","dean","dept_admin","user"].includes(r));
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -49,11 +54,11 @@ export default function LeavePage() {
   const statusColor = (s: string) => ({ pending: "text-yellow-600 bg-yellow-50", approved: "text-green-600 bg-green-50", rejected: "text-red-500 bg-red-50", cancelled: "text-gray-500 bg-gray-50" }[s] ?? "text-gray-500");
 
   return (
-    <div className="p-8">
+    <div className="pt-0 px-6 pb-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1A2E]">ระบบลาออนไลน์</h1>
-          <p className="text-sm text-[#6B7280] mt-1">ยื่นคำขอลา ตรวจสอบสถานะ และประวัติการลา</p>
+          <h1 className="text-2xl font-bold text-[#1A1A2E] mb-1">ระบบลาออนไลน์</h1>
+          <p className="text-sm text-[#6B7280]">ยื่นคำขอลา ตรวจสอบสถานะ และประวัติการลา</p>
         </div>
         <button onClick={() => setShowForm(true)}
           className="px-4 py-2.5 text-sm font-semibold bg-[#FDB813] text-[#1A1A2E] hover:bg-[#E5A800] transition-colors">+ ยื่นคำขอลา</button>

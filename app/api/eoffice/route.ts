@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       prisma.eofficeDocument.count({ where }),
     ]);
     return success(data, { total, page, limit });
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถดึงข้อมูลหนังสือได้");
   }
 }
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       },
     });
     return success(doc);
-  } catch (e) {
+  } catch {
     return error("INTERNAL", "ไม่สามารถส่งหนังสือได้");
   }
 }
