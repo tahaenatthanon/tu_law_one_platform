@@ -222,7 +222,7 @@ export default function SettingsPage() {
               <label className="text-xs text-[var(--tu-text-secondary)] block mb-2">
                 ออกจากระบบอัตโนมัติเมื่อไม่มีการใช้งาน
               </label>
-              <Select value={autoLogout} onValueChange={setAutoLogout}>
+              <Select value={autoLogout} onValueChange={(v) => setAutoLogout(v ?? "30")}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="เลือกระยะเวลา" />
                 </SelectTrigger>
