@@ -114,6 +114,41 @@ function AppIcon({ app, pinned, onTogglePin, onClick }: {
   );
 }
 
+/* ─── App List Item (List View) ─── */
+function AppListItem({ app, pinned, onTogglePin, onClick }: {
+  app: Application; pinned: boolean; onTogglePin: (id: string) => void; onClick: (app: Application) => void;
+}) {
+  const s = statusMap[app.status];
+  const isOffline = app.status === "offline";
+  return (
+    <div className="flex items-center gap-3 bg-white border border-[#D1D5DB] p-3 hover:border-[#FDB813] transition-colors group">
+      {/* Icon */}
+      <button onClick={() => onClick(app)} className="w-10 h-10 flex items-center justify-center shrink-0 bg-[#8B1515] hover:bg-[#A31D1D] transition-colors">
+        <svg className="w-5 h-5 text-[#FDB813]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={app.icon} />
+        </svg>
+      </button>
+      {/* Info */}
+      <button onClick={() => onClick(app)} className="flex-1 min-w-0 text-left">
+        <p className="text-sm font-medium text-[#1A1A2E] truncate">{app.name}</p>
+        <p className="text-[11px] text-[#6B7280] truncate">{app.description}</p>
+      </button>
+      {/* Status */}
+      <span className={`text-[11px] flex items-center gap-1 shrink-0 ${s.text}`}>
+        <span className={`inline-block w-1.5 h-1.5 rounded-full ${s.dot}`} />{s.label}
+      </span>
+      {/* Pin */}
+      <button onClick={(e) => { e.stopPropagation(); onTogglePin(app.id); }}
+        className={`shrink-0 p-1 transition-colors ${pinned ? "text-[#FDB813]" : "text-[#D1D5DB] hover:text-[#FDB813]"}`}
+        title={pinned ? "เลิกปักหมุด" : "ปักหมุด"}>
+        <svg className="w-4 h-4" fill={pinned ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Login Gate Modal — ก่อนเข้าใช้งาน App
    ═══════════════════════════════════════════════════════════════ */
@@ -676,7 +711,8 @@ function GlobalSearchResults({ keyword, allApps, userRoles }: { keyword: string;
 
 export default function ApplicationHubPage() {
   const { data: session } = useSession();
-  const userRoles: string[] = useMemo(() => session?.user?.roles ?? [], [session?.user?.roles]);
+  const userRoles: string[] = useMemo(() => (session?.user as Record<string, unknown>)?.roles as string[] ?? [], [session?.user]);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set(["eoffice", "academic"]);
@@ -774,7 +810,7 @@ export default function ApplicationHubPage() {
       {/* ═══ Content + Calendar ═══ */}
       <div className="flex gap-6 items-start" suppressHydrationWarning>
         <div className="flex-1 min-w-0">
-        {/* ─── Toolbar: Search + Advanced + Tabs ─── */}
+        {/* ─── Toolbar: Search + Advanced + Tabs + View Toggle ─── */}
         <div className="flex flex-col gap-1">
           <div className="relative">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -804,8 +840,9 @@ export default function ApplicationHubPage() {
           </div>
         </div>
 
-        {/* Category Tabs */}
-        <div className="flex flex-wrap gap-2 mt-3">
+        {/* Category Tabs + View Toggle */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
+          <div className="flex flex-wrap gap-2">
           <button onClick={() => setActiveCategory(null)}
             className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${activeCategory === null ? "bg-[#8B1515] text-white border-[#8B1515]" : "bg-white text-[#6B7280] border-[#D1D5DB] hover:border-[#FDB813] hover:text-[#1A1A2E]"}`}>
             ทั้งหมด
@@ -816,6 +853,20 @@ export default function ApplicationHubPage() {
               {cat.name}
             </button>
           ))}
+          </div>
+          {/* Grid / List Toggle */}
+          <div className="flex border border-[#D1D5DB] rounded overflow-hidden">
+            <button onClick={() => setViewMode("grid")}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "grid" ? "bg-[#8B1515] text-white" : "bg-white text-[#6B7280] hover:bg-[#F5F5F5]"}`}
+              title="Grid View">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+            </button>
+            <button onClick={() => setViewMode("list")}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "list" ? "bg-[#8B1515] text-white" : "bg-white text-[#6B7280] hover:bg-[#F5F5F5]"}`}
+              title="List View">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+            </button>
+          </div>
         </div>
 
         {/* ─── Important Announcements ─── */}
@@ -850,9 +901,9 @@ export default function ApplicationHubPage() {
               </svg>
               <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">ปักหมุด ({pinnedApps.length})</span>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+            <div className={viewMode === "list" ? "space-y-2" : "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4"}>
               {pinnedApps.map((app) => (
-                <AppIcon key={app.id} app={app} pinned={true} onTogglePin={togglePin} onClick={handleOpenApp} />
+                viewMode === "list" ? <AppListItem key={app.id} app={app} pinned={true} onTogglePin={togglePin} onClick={handleOpenApp} /> : <AppIcon key={app.id} app={app} pinned={true} onTogglePin={togglePin} onClick={handleOpenApp} />
               ))}
             </div>
           </div>
@@ -873,9 +924,9 @@ export default function ApplicationHubPage() {
               {totalApps > 0 && <p className="text-xs mt-1">แต่มี {pinnedApps.length} รายการที่ปักหมุดอยู่</p>}
             </div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+            <div className={viewMode === "list" ? "space-y-2" : "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4"}>
               {unpinnedApps.map((app) => (
-                <AppIcon key={app.id} app={app} pinned={false} onTogglePin={togglePin} onClick={handleOpenApp} />
+                viewMode === "list" ? <AppListItem key={app.id} app={app} pinned={false} onTogglePin={togglePin} onClick={handleOpenApp} /> : <AppIcon key={app.id} app={app} pinned={false} onTogglePin={togglePin} onClick={handleOpenApp} />
               ))}
             </div>
           )}
